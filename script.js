@@ -10,9 +10,43 @@ const COLORS = {
 
 const swotData = {
     strength: [
-        { lat: -2.5, lng: 118.0, title: 'BIODIVERSITY', desc: 'Hutan hujan tropis & Coral Triangle terdeteksi. Potensi sumber daya alam maksimal dan aset pariwisata ekologis.', color: COLORS.strength },
-        { lat: -6.2, lng: 106.8, title: 'DEMOGRAPHICS', desc: 'Konsentrasi populasi usia produktif tinggi (Bonus Demografi). Proyeksi pertumbuhan ekonomi eksponensial.', color: COLORS.strength },
-        { lat: -4.1, lng: 137.0, title: 'MINERALS', desc: 'Cadangan nikel dan mineral strategis terdeteksi. Material krusial untuk industri energi dan baterai global.', color: COLORS.strength }
+        {
+            lat: -4.5, lng: 139.0, // Papua - kekayaan SDA darat & potensi kelautan timur
+            title: 'KEKAYAAN SDA & POTENSI KELAUTAN',
+            tag: 'KEKUATAN_01',
+            desc: 'Indonesia memiliki kekayaan sumber daya alam darat yang melimpah (seperti nikel, emas, dan batu bara) serta potensi ekonomi sektor kelautan yang diperkirakan mencapai Rp17.000 triliun hingga Rp20.000 triliun per tahun jika dikelola secara maksimal.',
+            masaLalu: 'Kejayaan jalur perdagangan rempah-rempah Nusantara (pala dan cengkeh) di era kerajaan-kerajaan maritim yang menjadi daya tarik utama perdagangan internasional sejak abad ke-15.',
+            masaSekarang: 'Indonesia memiliki cadangan nikel terbesar di dunia (mencapai sekitar 55 juta metrik ton atau 42% dari total cadangan global), yang menempatkan Indonesia sebagai pemain kunci dalam rantai pasok industri baterai kendaraan listrik (Electric Vehicle) dunia.',
+            sumber: [
+                'https://pubs.usgs.gov/periodicals/mcs2024/mcs2024-nickel.pdf',
+                'https://nasional.kontan.co.id/news/jokowi-taksir-potensi-kelautan-rp-17000-t-setahun'
+            ],
+            color: COLORS.strength
+        },
+        {
+            lat: 1.8, lng: 101.5, // Selat Malaka - poros maritim dunia
+            title: 'WILAYAH GEOGRAFIS STRATEGIS',
+            tag: 'KEKUATAN_02',
+            desc: 'Terletak di antara dua samudra (Hindia dan Pasifik) serta dua benua (Asia dan Australia), Indonesia menguasai jalur pelayaran internasional utama seperti Selat Malaka, Selat Sunda, dan Selat Lombok.',
+            masaLalu: 'Kejayaan Kerajaan Sriwijaya dan Majapahit sebagai pusat perdagangan internasional yang mengontrol dan mengamankan lalu lintas kapal pedagang mancanegara.',
+            masaSekarang: 'Lebih dari satu pertiga lalu lintas perdagangan maritim dunia dan jalur distribusi energi global melintasi Selat Malaka setiap tahunnya, memberikan Indonesia kedudukan strategis secara geopolitik dan ekonomi.',
+            sumber: [
+                'https://unctad.org/system/files/official-document/rmt2023overview_en.pdf'
+            ],
+            color: COLORS.strength
+        },
+        {
+            lat: -7.9, lng: 112.6, // Jawa Timur - pusat bonus demografi & ekonomi digital
+            title: 'BONUS DEMOGRAFI & GENERASI MUDA',
+            tag: 'KEKUATAN_03',
+            desc: 'Berdasarkan data Sensus Penduduk, mayoritas penduduk Indonesia (sebesar 70,72%) berada pada kelompok usia produktif (15-64 tahun), yang menjadi modal utama dalam mendorong pertumbuhan ekonomi.',
+            masaLalu: 'Pergerakan pemuda tahun 1908 (Budi Utomo) dan 1928 yang menjadi motor penggerak kesadaran nasional.',
+            masaSekarang: 'Pesatnya pertumbuhan ekonomi digital Indonesia yang didominasi oleh inovasi generasi muda, seperti lahirnya berbagai perusahaan tech startup dan unicorn nasional.',
+            sumber: [
+                'https://sensus.bps.go.id/berita_resmi/detail/sp2020/14/hasil-sensus-penduduk-2020'
+            ],
+            color: COLORS.strength
+        }
     ],
     weakness: [
         { lat: -4.0, lng: 138.0, title: 'INFRASTRUCTURE GAP', desc: 'Kesenjangan infrastruktur fisik di sektor timur menyebabkan inefisiensi logistik.', color: COLORS.weakness },
@@ -196,10 +230,15 @@ function showDetail(point) {
     const title = document.getElementById('detail-title');
     const desc = document.getElementById('detail-desc');
     const tag = document.getElementById('detail-tag');
+
     const contohWrap = document.getElementById('detail-contoh-wrap');
     const contoh = document.getElementById('detail-contoh');
+    const masaLaluWrap = document.getElementById('detail-masalalu-wrap');
+    const masaLalu = document.getElementById('detail-masalalu');
+    const masaSekarangWrap = document.getElementById('detail-masasekarang-wrap');
+    const masaSekarang = document.getElementById('detail-masasekarang');
     const sumberWrap = document.getElementById('detail-sumber-wrap');
-    const sumber = document.getElementById('detail-sumber');
+    const sumberList = document.getElementById('detail-sumber-list');
 
     title.textContent = point.title;
     title.style.color = point.color;
@@ -210,20 +249,40 @@ function showDetail(point) {
     tag.style.color = point.color;
     tag.style.borderColor = point.color;
 
-    // Contoh konkret (opsional)
-    if (point.contoh) {
-        contoh.textContent = point.contoh;
-        contohWrap.classList.remove('hidden');
-    } else {
-        contohWrap.classList.add('hidden');
-    }
+    // Helper: tampilkan/sembunyikan bagian teks opsional
+    const setText = (wrap, el, value) => {
+        if (value) {
+            el.textContent = value;
+            wrap.classList.remove('hidden');
+        } else {
+            wrap.classList.add('hidden');
+        }
+    };
 
-    // Sumber (opsional)
-    if (point.sumber) {
-        sumber.href = point.sumber;
+    setText(contohWrap, contoh, point.contoh);
+    setText(masaLaluWrap, masaLalu, point.masaLalu);
+    setText(masaSekarangWrap, masaSekarang, point.masaSekarang);
+
+    // Sumber (opsional) - bisa 1 string atau beberapa (array)
+    sumberList.innerHTML = '';
+    const sumberArr = point.sumber
+        ? (Array.isArray(point.sumber) ? point.sumber : [point.sumber])
+        : [];
+
+    if (sumberArr.length) {
+        sumberArr.forEach((url, i) => {
+            const a = document.createElement('a');
+            a.className = 'source-link';
+            a.href = url;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.textContent = sumberArr.length > 1
+                ? `OPEN_SOURCE_0${i + 1}`
+                : 'OPEN_SOURCE';
+            sumberList.appendChild(a);
+        });
         sumberWrap.classList.remove('hidden');
     } else {
-        sumber.removeAttribute('href');
         sumberWrap.classList.add('hidden');
     }
 

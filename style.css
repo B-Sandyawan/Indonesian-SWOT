@@ -339,6 +339,7 @@ button:hover {
     background: var(--accent, var(--cyan));
     text-decoration: none;
     padding: 7px 14px;
+    margin: 0 6px 6px 0;
     letter-spacing: 1px;
     box-shadow: 0 0 12px rgba(0,243,255,0.25);
     transition: 0.25s;
