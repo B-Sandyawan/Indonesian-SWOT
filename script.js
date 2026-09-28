@@ -49,8 +49,56 @@ const swotData = {
         }
     ],
     weakness: [
-        { lat: -4.0, lng: 138.0, title: 'INFRASTRUCTURE GAP', desc: 'Kesenjangan infrastruktur fisik di sektor timur menyebabkan inefisiensi logistik.', color: COLORS.weakness },
-        { lat: 3.5, lng: 98.6, title: 'EDUCATION INDEX', desc: 'Distribusi kualitas SDM tidak merata. Indeks edukasi sub-optimal di area terluar dan pedalaman.', color: COLORS.weakness }
+        {
+            lat: -8.8, lng: 121.5, // NTT - wilayah dengan IPM rendah
+            title: 'KUALITAS SDM & LITERASI RENDAH',
+            tag: 'KEKURANGAN_01',
+            desc: 'Meskipun memiliki jumlah penduduk yang besar, tingkat pendidikan, keterampilan teknis, dan tingkat literasi masyarakat Indonesia secara umum masih tergolong rendah jika dibandingkan dengan negara-negara berkembang lainnya.',
+            masaLalu: 'Rendahnya tingkat pendidikan pasca-kemerdekaan membuat Indonesia sangat bergantung pada tenaga ahli asing dalam mengelola industri vital, seperti eksplorasi pertambangan dan minyak bumi di awal era Orde Baru.',
+            masaSekarang: 'Penilaian Programme for International Student Assessment (PISA) konsisten menunjukkan skor kemampuan membaca, matematika, dan sains siswa Indonesia berada di kelompok 10-15% terendah di dunia. Selain itu, masalah stunting (tengkes) pada anak masih menjadi tantangan serius bagi kualitas fisik dan kognitif SDM masa depan.',
+            sumber: ['https://www.oecd.org/en/about/programmes/pisa.html'],
+            color: COLORS.weakness
+        },
+        {
+            lat: -4.3, lng: 136.2, // Papua - wilayah timur yang tertinggal
+            title: 'KESENJANGAN PEMBANGUNAN ANTARWILAYAH',
+            tag: 'KEKURANGAN_02',
+            desc: 'Pembangunan ekonomi dan infrastruktur nasional selama bertahun-tahun cenderung berpusat di Pulau Jawa (Jawa-sentris), sehingga menimbulkan jurang ketimpangan fasilitas pendidikan, kesehatan, dan ekonomi antara Indonesia Barat dan Indonesia Timur.',
+            masaLalu: 'Ketimpangan alokasi pembangunan antara pusat (Jawa) dan daerah pada era 1950-an memicu kekecewaan daerah hingga memunculkan gerakan pemicu konflik internal di beberapa wilayah (seperti PRRI/Permesta).',
+            masaSekarang: 'Indeks Pembangunan Manusia (IPM) di wilayah seperti Papua dan Nusa Tenggara Timur (NTT) masih jauh tertinggal dibandingkan wilayah DKI Jakarta atau DI Yogyakarta. Akses terhadap listrik, air bersih, dan internet di wilayah 3T (Tertinggal, Terdepan, dan Terluar) juga masih terbatas.',
+            sumber: ['https://www.bps.go.id/id/statistics-table/1/MTIyMCMx/indeks-pembangunan-manusia-menurut-provinsi.html'],
+            color: COLORS.weakness
+        },
+        {
+            lat: -6.2, lng: 106.8, // Jakarta - pusat birokrasi & kasus korupsi
+            title: 'BIROKRASI LAMBAT & KORUPSI TINGGI',
+            tag: 'KEKURANGAN_03',
+            desc: 'Kerumitan birokrasi, regulasi yang tumpang-tindih, serta masih maraknya praktik korupsi, kolusi, dan nepotisme (KKN) menjadi penghambat utama efisiensi pelayanan publik dan iklim investasi.',
+            masaLalu: 'Praktik KKN yang meluas pada era Orde Baru merusak tatanan perbankan nasional, yang akhirnya memperparah dampak Krisis Moneter 1997/1998 di Indonesia.',
+            masaSekarang: 'Kasus korupsi skala besar yang melibatkan pejabat publik, anggota DPR, hingga aparat penegak hukum masih sering terjadi (seperti korupsi tata niaga komoditas, proyek infrastruktur, atau bantuan sosial) yang merugikan keuangan negara hingga triliunan rupiah.',
+            sumber: ['https://www.transparency.org/en/cpi'],
+            color: COLORS.weakness
+        },
+        {
+            lat: 1.1, lng: 104.0, // Batam - gerbang impor barang modal & komponen
+            title: 'KETERGANTUNGAN IMPOR TEKNOLOGI',
+            tag: 'KEKURANGAN_04',
+            desc: 'Indonesia kaya akan sumber daya alam, namun industri dalam negeri masih memiliki ketergantungan yang sangat tinggi terhadap impor barang modal, komponen elektronik, mesin industri, serta bahan baku penolong.',
+            masaLalu: 'Booms minyak dan gas (migas) pada era 1970-an tidak dimanfaatkan secara optimal untuk membangun fondasi industri manufaktur berteknologi tinggi berbasis kemandirian, sehingga perekonomian langsung terguncang saat harga minyak dunia anjlok.',
+            masaSekarang: 'Sektor farmasi dalam negeri masih mengimpor lebih dari 80-90% Bahan Baku Obat (BBO). Selain itu, industri manufaktur otomotif dan elektronik nasional masih sangat bergantung pada pasokan komponen utama dari luar negeri.',
+            sumber: ['https://www.kemendag.go.id/sumber-informasi/statistik-perdagangan'],
+            color: COLORS.weakness
+        },
+        {
+            lat: -1.4, lng: 120.8, // Poso - titik konflik horizontal era Reformasi
+            title: 'KERENTANAN KONFLIK & POLITIK IDENTITAS',
+            tag: 'KEKURANGAN_05',
+            desc: 'Keanekaragaman suku, agama, ras, dan antar-golongan (SARA) merupakan kekayaan bangsa, namun di sisi lain menjadi titik lemah jika dimanipulasi oleh politik identitas dan penyebaran informasi palsu (hoax).',
+            masaLalu: 'Konflik komunal sosial-kemasyarakatan berdarah yang pernah terjadi di Sampit (2001) serta konflik berlatar belakang agama di Poso dan Ambon pada era pasca-Reformasi (1999-2002).',
+            masaSekarang: 'Maraknya penggunaan narasi politisasi agama, manipulasi isu SARA di media sosial, serta polarisasi masyarakat yang tajam setiap kali pelaksanaan Pemilihan Umum (Pemilu) maupun Pilkada.',
+            sumber: ['https://www.komnasham.go.id/index.php/laporan'],
+            color: COLORS.weakness
+        }
     ],
     opportunity: [
         {
@@ -109,9 +157,50 @@ const swotData = {
         }
     ],
     threat: [
-        { lat: -0.9, lng: 100.3, title: 'SEISMIC ACTIVITY', desc: 'Aktivitas vulkanik & tektonik (Ring of Fire) level tinggi. Risiko gangguan struktural berskala masif.', color: COLORS.threat },
-        { lat: 4.5, lng: 108.5, title: 'GEOPOLITICS', desc: 'Ketegangan wilayah maritim (Laut Natuna Utara). Potensi ancaman kedaulatan dan instabilitas regional.', color: COLORS.threat },
-        { lat: -6.1, lng: 106.8, title: 'CLIMATE CHANGE', desc: 'Anomali iklim dan kenaikan muka air laut terdeteksi. Ancaman langsung pada pesisir utara dan ketahanan pangan.', color: COLORS.threat }
+        {
+            lat: 4.6, lng: 97.5, // Aceh - tantangan SDM & jebakan pendapatan menengah
+            title: 'KUALITAS SDM & MIDDLE INCOME TRAP',
+            tag: 'ANCAMAN_01',
+            poin: [
+                { label: 'Pendidikan belum merata', isi: 'Akses dan fasilitas sekolah di daerah tertinggal masih tertinggal jauh dibanding kota besar.' },
+                { label: 'Jebakan pendapatan menengah', isi: 'Indonesia harus meningkatkan produktivitas dan keterampilan tenaga kerja agar tidak terjebak dalam middle income trap dalam perjalanan menuju Indonesia Emas 2045.' }
+            ],
+            sumber: ['https://deepublishstore.com/blog/sejarah/tantangan-generasi-muda-dalam-membangun-indonesia/'],
+            color: COLORS.threat
+        },
+        {
+            lat: -2.99, lng: 104.77, // Palembang - kesenjangan sosial & ekonomi
+            title: 'KESENJANGAN SOSIAL & EKONOMI',
+            tag: 'ANCAMAN_02',
+            poin: [
+                { label: 'Ketimpangan wilayah', isi: 'Perbedaan tingkat pembangunan antara kawasan barat dan timur Indonesia, serta antara perkotaan dan pedesaan, masih tinggi.' },
+                { label: 'Kemiskinan dan pengangguran', isi: 'Keterbatasan jumlah lapangan kerja yang sebanding dengan jumlah angkatan kerja baru memicu masalah pengangguran.' }
+            ],
+            sumber: ['https://masuk-ptn.com/materi/persatuan-dan-kedaulatan-bangsa-materi-ppkn-kelas-11/tantangan-integrasi-nasional'],
+            color: COLORS.threat
+        },
+        {
+            lat: -0.0, lng: 109.3, // Pontianak - persatuan & integritas nasional
+            title: 'PERSATUAN & INTEGRITAS NASIONAL',
+            tag: 'ANCAMAN_03',
+            poin: [
+                { label: 'Intoleransi dan radikalisme', isi: 'Menguatnya politik identitas, etnosentrisme, serta paham radikal dapat merusak kerukunan dalam masyarakat yang beragam.' },
+                { label: 'Disinformasi', isi: 'Penyebaran berita bohong atau hoaks di media sosial yang mudah memecah belah warga.' }
+            ],
+            sumber: ['https://www.gramedia.com/literasi/tantangan-dalam-menjaga-keutuhan-nkri/'],
+            color: COLORS.threat
+        },
+        {
+            lat: -5.1, lng: 119.4, // Makassar - tata kelola & korupsi
+            title: 'TATA KELOLA & KORUPSI',
+            tag: 'ANCAMAN_04',
+            poin: [
+                { label: 'Pemberantasan korupsi', isi: 'Praktik korupsi dan lemahnya penegakan hukum masih menjadi penghambat utama efisiensi pembangunan nasional.' },
+                { label: 'Pengelolaan SDA', isi: 'Pemanfaatan sumber daya alam yang belum optimal secara berkelanjutan sering memicu isu lingkungan seperti kerusakan alam.' }
+            ],
+            sumber: ['https://id.scribd.com/document/862615468/BAB-2-SUB-B-Kelemahan-Dan-Tantangan-Bgsa-Indo'],
+            color: COLORS.threat
+        }
     ]
 };
 
@@ -237,6 +326,8 @@ function showDetail(point) {
     const masaLalu = document.getElementById('detail-masalalu');
     const masaSekarangWrap = document.getElementById('detail-masasekarang-wrap');
     const masaSekarang = document.getElementById('detail-masasekarang');
+    const poinWrap = document.getElementById('detail-poin-wrap');
+    const poinList = document.getElementById('detail-poin');
     const sumberWrap = document.getElementById('detail-sumber-wrap');
     const sumberList = document.getElementById('detail-sumber-list');
 
@@ -262,6 +353,22 @@ function showDetail(point) {
     setText(contohWrap, contoh, point.contoh);
     setText(masaLaluWrap, masaLalu, point.masaLalu);
     setText(masaSekarangWrap, masaSekarang, point.masaSekarang);
+
+    // Daftar poin bertanda bullet (mis. poin tantangan): {label, isi}
+    poinList.innerHTML = '';
+    if (point.poin && point.poin.length) {
+        point.poin.forEach(p => {
+            const li = document.createElement('li');
+            const strong = document.createElement('strong');
+            strong.textContent = p.label + ': ';
+            li.appendChild(strong);
+            li.appendChild(document.createTextNode(p.isi));
+            poinList.appendChild(li);
+        });
+        poinWrap.classList.remove('hidden');
+    } else {
+        poinWrap.classList.add('hidden');
+    }
 
     // Sumber (opsional) - bisa 1 string atau beberapa (array)
     sumberList.innerHTML = '';
