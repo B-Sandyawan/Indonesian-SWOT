@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWOT Indonesia - HUD Interface</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="grid-bg"></div>
+    <div class="scanlines"></div>
+
+    <!-- HUD Decorators -->
+    <div class="hud-top-left">
+        <div>SYS.OP. 993-A // INDONESIA</div>
+        <div>LAT: 0.789S LON: 113.921E</div>
+    </div>
+    <div class="hud-top-right">
+        <div class="radar-circle"></div>
+        <div>STATUS: <span id="status-text" class="status-ok">ONLINE</span></div>
+    </div>
+    <div class="hud-bottom-left">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>
+    
+    <!-- Threat Overlay -->
+    <div id="threat-overlay">
+        <svg class="cracks-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path d="M50,0 L45,15 L52,25 L40,45 L55,60 L45,80 L50,100" />
+            <path d="M100,30 L80,35 L85,45 L70,50 L75,70 L60,80 L65,100" />
+            <path d="M0,20 L15,25 L10,40 L30,55 L20,75 L35,90 L25,100" />
+            <path d="M20,0 L25,15 L15,30 L30,40 L25,60 L10,75 L0,80" />
+            <path d="M70,0 L75,20 L65,40 L80,60 L70,80 L85,100" />
+        </svg>
+        <div class="threat-warning-text">⚠ CRITICAL THREAT DETECTED ⚠</div>
+    </div>
+    
+    <!-- Globe Container -->
+    <div id="globeViz"></div>
+    
+    <!-- UI Controls -->
+    <div class="ui-container">
+        <h1>[ SWOT_ANALYSIS ]</h1>
+        <p class="subtitle">TARGET: INDONESIA</p>
+        <div class="buttons">
+            <button id="btn-strength" onclick="setCategory('strength')">
+                <span class="bracket">[</span> STRENGTH <span class="bracket">]</span>
+            </button>
+            <button id="btn-weakness" onclick="setCategory('weakness')">
+                <span class="bracket">[</span> WEAKNESS <span class="bracket">]</span>
+            </button>
+            <button id="btn-opportunity" onclick="setCategory('opportunity')">
+                <span class="bracket">[</span> OPPORTUNITY <span class="bracket">]</span>
+            </button>
+            <button id="btn-threat" onclick="setCategory('threat')">
+                <span class="bracket">[</span> THREAT <span class="bracket">]</span>
+            </button>
+        </div>
+        <div class="instructions">
+            > SELECT PARAMETER TO INITIATE SCAN...
+        </div>
+    </div>
+
+    <!-- Details Panel -->
+    <div id="detail-modal" class="hidden">
+        <h2 id="detail-title">Title</h2>
+        <p id="detail-desc">Description</p>
+        <button onclick="closeModal()">> CLOSE_PANEL</button>
+    </div>
+
+    <script src="//unpkg.com/three"></script>
+    <script src="//unpkg.com/globe.gl"></script>
+    <script src="script.js"></script>
+</body>
+</html>
