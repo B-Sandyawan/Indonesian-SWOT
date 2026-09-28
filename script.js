@@ -19,8 +19,60 @@ const swotData = {
         { lat: 3.5, lng: 98.6, title: 'EDUCATION INDEX', desc: 'Distribusi kualitas SDM tidak merata. Indeks edukasi sub-optimal di area terluar dan pedalaman.', color: COLORS.weakness }
     ],
     opportunity: [
-        { lat: 1.0, lng: 104.0, title: 'GEO-STRATEGIC', desc: 'Jalur maritim vital internasional (Selat Malaka) terpantau. Posisi tawar diplomasi dan logistik global sangat kuat.', color: COLORS.opportunity },
-        { lat: -1.2, lng: 116.8, title: 'NEW CAPITAL (IKN)', desc: 'Titik pusat gravitasi ekonomi baru (IKN Nusantara). Node investasi strategis masa depan untuk pemerataan.', color: COLORS.opportunity }
+        {
+            lat: -2.6, lng: 121.6, // Sulawesi - pusat industri hilirisasi nikel (Morowali)
+            title: 'HILIRISASI SUMBER DAYA ALAM',
+            tag: 'PELUANG_01',
+            desc: 'Indonesia memiliki sumber daya alam yang besar, seperti nikel, bauksit, tembaga, kelapa sawit, rumput laut, dan hasil perikanan. Peluangnya adalah mengolah bahan mentah tersebut menjadi produk jadi atau setengah jadi sehingga memiliki nilai tambah yang lebih tinggi.',
+            contoh: 'Nikel tidak hanya diekspor sebagai bahan mentah, tetapi dikembangkan menjadi bahan baku baterai dan bagian dari ekosistem kendaraan listrik. Menurut BKPM, realisasi investasi hilirisasi sepanjang 2025 mencapai Rp584,1 triliun, tumbuh 43,3% dibandingkan tahun sebelumnya. Pemerintah juga telah menyusun peta jalan hilirisasi untuk 28 komoditas di 8 sektor.',
+            sumber: 'https://bkpm.go.id/id/info/siaran-pers/realisasi-investasi-2025-lampaui-target-hilirisasi-melompat-43-3-persen',
+            color: COLORS.opportunity
+        },
+        {
+            lat: -1.0, lng: 116.5, // Kalimantan - proyek strategis & kawasan industri
+            title: 'PELUANG INVESTASI YANG BESAR',
+            tag: 'PELUANG_02',
+            desc: 'Indonesia memiliki pasar domestik yang besar, sumber daya alam yang melimpah, serta berbagai proyek strategis yang dapat menarik investasi dalam negeri maupun asing.',
+            contoh: 'Investasi dapat dikembangkan pada sektor industri, infrastruktur, pariwisata, energi, kawasan industri, dan pengolahan sumber daya alam. BKPM mencatat realisasi investasi Indonesia sepanjang 2025 mencapai Rp1.931,2 triliun, dengan penyerapan tenaga kerja sekitar 2,71 juta orang. BKPM juga menyediakan katalog proyek investasi strategis yang dapat ditawarkan kepada investor.',
+            sumber: 'https://bkpm.go.id/id/info/siaran-pers/realisasi-investasi-semester-i-2026-tembus-rp-1-010-t-serap-1-4-juta-tenaga-kerja-langsung',
+            color: COLORS.opportunity
+        },
+        {
+            lat: -10.2, lng: 123.6, // NTT - potensi PLTS, angin & energi laut
+            title: 'ENERGI BARU DAN TERBARUKAN',
+            tag: 'PELUANG_03',
+            desc: 'Indonesia memiliki potensi energi terbarukan yang sangat besar karena kondisi geografisnya. Sumbernya meliputi tenaga surya, air, angin, bioenergi, panas bumi, dan energi laut.',
+            contoh: 'Pengembangan pembangkit listrik tenaga surya, panas bumi, dan energi air dapat menjadi peluang untuk memenuhi kebutuhan energi sekaligus mendukung transisi menuju energi yang lebih bersih. BKPM memperkirakan Indonesia memiliki potensi energi terbarukan lebih dari 3.600 GW, sementara pemanfaatannya masih kurang dari 1%. Kondisi tersebut menunjukkan masih terdapat ruang pengembangan yang besar.',
+            sumber: 'https://bkpm.go.id/id/info/artikel/book/katalog-peluang-proyek-investasi-di-indonesia',
+            color: COLORS.opportunity
+        },
+        {
+            lat: -6.3, lng: 107.5, // Jabodetabek - pusat ekonomi digital & UMKM
+            title: 'PENGEMBANGAN EKONOMI DIGITAL',
+            tag: 'PELUANG_04',
+            desc: 'Perkembangan teknologi dan penggunaan internet membuka peluang bagi Indonesia untuk mengembangkan ekonomi digital, seperti perdagangan elektronik, layanan digital, teknologi finansial, dan bisnis berbasis teknologi.',
+            contoh: 'UMKM dapat menggunakan marketplace dan media digital untuk menjual produk ke konsumen dari berbagai daerah, bahkan membuka peluang pasar internasional. Peluang ini juga dapat mendorong munculnya perusahaan teknologi baru, lapangan pekerjaan di bidang digital, serta transformasi bisnis konvensional menjadi bisnis berbasis teknologi.',
+            sumber: 'https://www.ekon.go.id/publikasi/detail/6849/sinergi-digitalisasi-pusat-dan-daerah-kemenko-perekonomian-paparkan-strategi-nasional-pengembangan-ekonomi-digital',
+            color: COLORS.opportunity
+        },
+        {
+            lat: -8.4, lng: 115.5, // Bali - destinasi pariwisata utama
+            title: 'PENGEMBANGAN PARIWISATA',
+            tag: 'PELUANG_05',
+            desc: 'Indonesia memiliki kekayaan alam dan budaya yang beragam, mulai dari pantai, pegunungan, hutan, hingga berbagai tradisi dan peninggalan budaya. Hal tersebut menjadi peluang untuk mengembangkan sektor pariwisata.',
+            contoh: 'Pengembangan destinasi wisata di berbagai daerah dapat meningkatkan pendapatan masyarakat melalui hotel, restoran, transportasi, UMKM, kerajinan, dan jasa wisata. BKPM juga memasukkan pariwisata sebagai salah satu sektor dalam daftar peluang investasi Indonesia, dengan berbagai proyek yang tersebar di daerah.',
+            sumber: 'https://kemenpar.go.id/berita/menpar-paparkan-capaian-pariwisata-2025-dan-rencana-kerja-2026-di-hadapan-komisi-vii-dpr',
+            color: COLORS.opportunity
+        },
+        {
+            lat: -3.7, lng: 128.2, // Maluku - pusat perikanan & hilirisasi hasil laut
+            title: 'SEKTOR KELAUTAN & PERIKANAN',
+            tag: 'PELUANG_06',
+            desc: 'Sebagai negara kepulauan, Indonesia memiliki potensi besar dalam sektor kelautan dan perikanan. Peluangnya tidak hanya berasal dari penangkapan ikan, tetapi juga dari pengolahan hasil laut dan pengembangan industri turunannya.',
+            contoh: 'Ikan, udang, garam, dan rumput laut dapat diolah menjadi produk bernilai tambah sebelum dipasarkan di dalam maupun luar negeri. BKPM mencatat bahwa pemerintah mendorong hilirisasi sektor kelautan dan perikanan, termasuk rumput laut, garam, serta berbagai jenis ikan.',
+            sumber: 'https://share.google/caWx4VFBg2SPh45pq',
+            color: COLORS.opportunity
+        }
     ],
     threat: [
         { lat: -0.9, lng: 100.3, title: 'SEISMIC ACTIVITY', desc: 'Aktivitas vulkanik & tektonik (Ring of Fire) level tinggi. Risiko gangguan struktural berskala masif.', color: COLORS.threat },
@@ -51,6 +103,9 @@ const world = Globe()(elem)
         const wrapper = document.createElement('div');
         wrapper.style.cursor = 'pointer';
         wrapper.style.pointerEvents = 'auto';
+        // Area klik lebih besar dari ikon (12px ekstra tiap sisi)
+        wrapper.style.padding = '12px';
+        wrapper.style.boxSizing = 'content-box';
         wrapper.innerHTML = `
             <svg width="40" height="40" viewBox="0 0 40 40" style="filter: drop-shadow(0 0 6px ${d.color}); overflow:visible;">
                 <!-- outer circle -->
@@ -66,7 +121,8 @@ const world = Globe()(elem)
                 <circle cx="20" cy="20" r="2" fill="${d.color}"/>
             </svg>
         `;
-        wrapper.style.transform = 'translate(-20px, -20px)';
+        // Ikon 40px + padding 12px = kotak 64px, geser setengahnya agar tetap center
+        wrapper.style.transform = 'translate(-32px, -32px)';
         wrapper.onclick = () => {
             showDetail(d);
             world.pointOfView({ lat: d.lat, lng: d.lng, altitude: 0.4 }, 1500);
@@ -139,13 +195,39 @@ function showDetail(point) {
     const modal = document.getElementById('detail-modal');
     const title = document.getElementById('detail-title');
     const desc = document.getElementById('detail-desc');
+    const tag = document.getElementById('detail-tag');
+    const contohWrap = document.getElementById('detail-contoh-wrap');
+    const contoh = document.getElementById('detail-contoh');
+    const sumberWrap = document.getElementById('detail-sumber-wrap');
+    const sumber = document.getElementById('detail-sumber');
 
     title.textContent = point.title;
     title.style.color = point.color;
     desc.textContent = point.desc;
 
+    // Tag / ID data di atas judul
+    tag.textContent = '// ' + (point.tag || 'DATA');
+    tag.style.color = point.color;
+    tag.style.borderColor = point.color;
+
+    // Contoh konkret (opsional)
+    if (point.contoh) {
+        contoh.textContent = point.contoh;
+        contohWrap.classList.remove('hidden');
+    } else {
+        contohWrap.classList.add('hidden');
+    }
+
+    // Sumber (opsional)
+    if (point.sumber) {
+        sumber.href = point.sumber;
+        sumberWrap.classList.remove('hidden');
+    } else {
+        sumber.removeAttribute('href');
+        sumberWrap.classList.add('hidden');
+    }
+
     modal.style.borderColor = point.color;
-    modal.querySelector('::before');
     modal.style.setProperty('--accent', point.color);
     modal.classList.remove('hidden');
 
