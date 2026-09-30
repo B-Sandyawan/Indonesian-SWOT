@@ -396,13 +396,18 @@ function showDetail(point) {
     modal.style.borderColor = point.color;
     modal.style.setProperty('--accent', point.color);
     modal.classList.remove('hidden');
+    modal.style.display = 'block';
+    modal.setAttribute('aria-hidden', 'false');
 
     world.controls().autoRotate = false;
     document.getElementById('status-text').textContent = 'TARGET LOCKED';
 }
 
 function closeModal() {
-    document.getElementById('detail-modal').classList.add('hidden');
+    const modal = document.getElementById('detail-modal');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
 
     if (currentCategory === 'threat') {
         world.controls().autoRotate = false;
@@ -414,3 +419,698 @@ function closeModal() {
         document.getElementById('status-text').textContent = 'ONLINE';
     }
 }
+
+// ========== FEEDBACK (via SUPABASE) ==========
+const SUPABASE_URL = 'https://svsjxqxxwjetvtucjynk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_RCquFS_iB6WMEj03NWQa_w_YLyVqJ0l';
+const COMMENTS_ENDPOINT = SUPABASE_URL + '/rest/v1/comments';
+const MAX_MESSAGE_LENGTH = 500;
+
+const commentsHeaders = {
+    apikey: SUPABASE_KEY,
+    Authorization: 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json'
+};
+
+let commentsLoaded = false;
+// null = belum diketahui, true = kolom parent_id tersedia, false = belum ada
+let parentIdColumnAvailable = null;
+// Penghitung urutan render, dipakai untuk efek masuk berurutan tiap item
+let commentSequence = 0;
+
+function setLogStatus(message, type) {
+    const el = document.getElementById('log-status');
+    if (!el) return;
+    el.textContent = message || '';
+    if (type) {
+        el.dataset.type = type;
+    } else {
+        delete el.dataset.type;
+    }
+}
+
+function formatLogTime(value) {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return '--';
+    return date.toLocaleString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Markdown ringan: **bold**, *italic*, `code`, [teks](url), dan daftar "- ".
+// Input di-escape lebih dulu, jadi HTML dari pengguna tidak pernah dieksekusi.
+function inlineMarkdown(str) {
+    const codes = [];
+    let out = str.replace(/`([^`]+)`/g, (match, code) => {
+        codes.push(code);
+        return '\u0000C' + (codes.length - 1) + '\u0000';
+    });
+
+    out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (match, label, url) => {
+        if (!/^https?:\/\//i.test(url)) return label;
+        return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + label + '</a>';
+    });
+
+    out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    out = out.replace(/(^|[\s(])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+    out = out.replace(/(^|[\s(])_([^_\n]+)_/g, '$1<em>$2</em>');
+
+    return out.replace(/\u0000C(\d+)\u0000/g, (match, i) => '<code>' + codes[Number(i)] + '</code>');
+}
+
+function renderMarkdown(text) {
+    return escapeHtml(text)
+        .split(/\n{2,}/)
+        .map(block => {
+            const lines = block.split('\n').filter(line => line.trim() !== '');
+            if (!lines.length) return '';
+
+            if (lines.every(line => /^\s*[-*]\s+/.test(line))) {
+                const items = lines
+                    .map(line => '<li>' + inlineMarkdown(line.replace(/^\s*[-*]\s+/, '')) + '</li>')
+                    .join('');
+                return '<ul>' + items + '</ul>';
+            }
+
+            return '<p>' + inlineMarkdown(lines.join('<br />')) + '</p>';
+        })
+        .join('');
+}
+
+const MESSAGE_CLAMP_LENGTH = 240;
+
+// Pesan panjang dilipat supaya daftar log tidak menutupi seluruh panel
+function buildMessageElement(text) {
+    const msg = document.createElement('div');
+    msg.className = 'log-item-msg';
+    msg.innerHTML = renderMarkdown(text || '');
+
+    if (String(text || '').length <= MESSAGE_CLAMP_LENGTH) return msg;
+
+    msg.classList.add('clamped');
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'log-msg-toggle';
+    toggle.textContent = '[ Lihat Selengkapnya ]';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'log-item-msg-wrap is-clamped';
+    wrap.appendChild(msg);
+    wrap.appendChild(toggle);
+
+    toggle.addEventListener('click', () => {
+        const clamped = msg.classList.toggle('clamped');
+        wrap.classList.toggle('is-clamped', clamped);
+        toggle.textContent = clamped ? '[ Lihat Selengkapnya ]' : '[ Lipat ]';
+    });
+
+    return wrap;
+}
+
+function buildCommentItem(comment, isReply, byId) {
+    const item = document.createElement('article');
+    item.className = 'log-item' + (isReply ? ' log-item-reply' : '');
+
+    // Efek masuk berurutan supaya daftar terasa hidup saat dimuat
+    item.style.animationDelay = Math.min(commentSequence * 45, 620) + 'ms';
+    commentSequence += 1;
+
+    const head = document.createElement('div');
+    head.className = 'log-item-head';
+
+    const left = document.createElement('div');
+    left.className = 'log-item-head-left';
+
+    const name = document.createElement('span');
+    name.className = 'log-item-name';
+    name.textContent = comment.name || 'ANONIM';
+    left.appendChild(name);
+
+    if (isReply) {
+        const to = document.createElement('span');
+        to.className = 'log-item-to';
+        to.textContent = '→ @' + (((byId[comment.parent_id] || {}).name) || 'ANONIM');
+        left.appendChild(to);
+    }
+
+    const right = document.createElement('div');
+    right.className = 'log-item-head-right';
+
+    const time = document.createElement('time');
+    time.className = 'log-item-time';
+    time.dateTime = comment.created_at || '';
+    time.textContent = formatLogTime(comment.created_at);
+    right.appendChild(time);
+
+    // Tombol balas disembunyikan otomatis kalau kolom parent_id belum ada
+    if (parentIdColumnAvailable !== false) {
+        const replyBtn = document.createElement('button');
+        replyBtn.type = 'button';
+        replyBtn.className = 'log-reply-btn';
+        replyBtn.dataset.action = 'reply';
+        replyBtn.dataset.id = comment.id;
+        replyBtn.dataset.name = comment.name || 'ANONIM';
+        replyBtn.textContent = '[ Balas ]';
+        right.appendChild(replyBtn);
+    }
+
+    head.appendChild(left);
+    head.appendChild(right);
+    item.appendChild(head);
+    item.appendChild(buildMessageElement(comment.message));
+
+    return item;
+}
+
+function renderComments(comments) {
+    const listEl = document.getElementById('log-list');
+    const countEl = document.getElementById('log-count');
+    if (!listEl) return;
+
+    if (countEl) countEl.textContent = '(' + comments.length + ')';
+
+    if (!comments.length) {
+        listEl.innerHTML = '<p class="log-empty">Belum ada feedback. Jadilah yang pertama!</p>';
+        return;
+    }
+
+    const byId = {};
+    comments.forEach(c => { byId[c.id] = c; });
+    commentSequence = 0;
+
+    // Pisahkan komentar akar dan turunannya (balasan bertingkat dirapikan 1 tingkat)
+    const roots = [];
+    const childrenOf = {};
+
+    comments.forEach(comment => {
+        const parent = comment.parent_id;
+        if (parent && byId[parent]) {
+            if (!childrenOf[parent]) childrenOf[parent] = [];
+            childrenOf[parent].push(comment);
+        } else {
+            roots.push(comment);
+        }
+    });
+
+    listEl.innerHTML = '';
+
+    roots.forEach(root => {
+        listEl.appendChild(buildCommentItem(root, false, byId));
+
+        const replies = [];
+        const collect = id => {
+            (childrenOf[id] || []).forEach(child => {
+                replies.push(child);
+                collect(child.id);
+            });
+        };
+        collect(root.id);
+
+        if (!replies.length) return;
+
+        replies.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+        const wrap = document.createElement('div');
+        wrap.className = 'log-item-replies';
+        replies.forEach(reply => wrap.appendChild(buildCommentItem(reply, true, byId)));
+        listEl.appendChild(wrap);
+    });
+
+    if (parentIdColumnAvailable === false) {
+        const notice = document.createElement('p');
+        notice.className = 'log-notice';
+        notice.textContent = 'Fitur balas belum aktif. Jalankan migrasi kolom parent_id di database.';
+        listEl.appendChild(notice);
+    }
+}
+
+async function loadComments() {
+    const listEl = document.getElementById('log-list');
+    if (!listEl) return;
+
+    listEl.innerHTML = '<p class="log-empty">Memuat feedback...</p>';
+
+    const baseFields = 'id,name,message,created_at';
+    const fields = parentIdColumnAvailable === false ? baseFields : baseFields + ',parent_id';
+
+    try {
+        const response = await fetch(
+            COMMENTS_ENDPOINT + '?select=' + fields + '&order=created_at.desc&limit=100',
+            { headers: commentsHeaders }
+        );
+
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        const comments = await response.json();
+        parentIdColumnAvailable = true;
+        const daftar = Array.isArray(comments) ? comments : [];
+        renderComments(daftar);
+        updateFloatFeed(daftar);
+        commentsLoaded = true;
+    } catch (error) {
+        // Kolom parent_id belum ada -> ulangi tanpa fitur balasan
+        if (parentIdColumnAvailable === null && String(error.message).indexOf('400') !== -1) {
+            parentIdColumnAvailable = false;
+            return loadComments();
+        }
+        listEl.innerHTML = '<p class="log-empty">Gagal memuat feedback. Coba muat ulang.</p>';
+        console.error('Gagal memuat komentar:', error);
+    }
+}
+
+function setReplyTarget(id, name) {
+    const parentInput = document.getElementById('log-parent');
+    const banner = document.getElementById('log-reply-banner');
+    const target = document.getElementById('log-reply-target');
+    const messageInput = document.getElementById('log-message');
+
+    if (!parentInput || !banner) return;
+
+    parentInput.value = String(id);
+    if (target) target.textContent = name || 'ANONIM';
+    banner.classList.remove('hidden');
+    banner.style.display = 'flex';
+
+    if (messageInput) {
+        messageInput.focus();
+        setLogStatus('Mode balas aktif untuk ' + (name || 'anonim') + '.', 'info');
+    }
+}
+
+function resetReplyTarget() {
+    const parentInput = document.getElementById('log-parent');
+    const banner = document.getElementById('log-reply-banner');
+    if (!parentInput || !banner) return;
+
+    parentInput.value = '';
+    banner.classList.add('hidden');
+    banner.style.display = 'none';
+}
+
+// ===== Feedback melayang: tampilkan satu komentar, ganti otomatis =====
+const FLOAT_INTERVAL = 7000; // jeda antar komentar (ms)
+
+let floatComments = [];
+let floatIndex = 0;
+let floatTimer = null;
+
+function floatFeedEl() {
+    return document.getElementById('float-feed');
+}
+
+function stopFloatFeed() {
+    if (floatTimer) {
+        clearTimeout(floatTimer);
+        floatTimer = null;
+    }
+}
+
+// Susun daftar dot penanda halaman
+function buildFloatPager() {
+    const wrap = floatFeedEl();
+    if (!wrap) return;
+
+    const lama = wrap.querySelector('.float-pager');
+    if (lama) lama.remove();
+
+    if (floatComments.length < 2) return;
+
+    const pager = document.createElement('div');
+    pager.className = 'float-pager';
+
+    floatComments.forEach((_, i) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.setAttribute('aria-label', 'Lihat feedback ' + (i + 1));
+        if (i === floatIndex) dot.classList.add('aktif');
+        dot.addEventListener('click', () => {
+            floatIndex = i;
+            tampilkanFloat();
+        });
+        pager.appendChild(dot);
+    });
+
+    const hitung = document.createElement('span');
+    hitung.className = 'float-hitung';
+    hitung.textContent = (floatIndex + 1) + '/' + floatComments.length;
+    pager.appendChild(hitung);
+
+    wrap.appendChild(pager);
+}
+
+// Menampilkan komentar pada floatIndex saat ini, lalu menjadwalkan
+// komentar berikutnya. floatIndex hanya dinaikkan di satu tempat
+// (di dalam timer) supaya penunjuk selalu sinkron dengan yang tampil.
+function tampilkanFloat() {
+    const wrap = floatFeedEl();
+    if (!wrap || !floatComments.length) return;
+
+    // Bersihkan jadwal lama supaya tidak ada dua timer berjalan
+    stopFloatFeed();
+
+    floatIndex = floatIndex % floatComments.length;
+    const comment = floatComments[floatIndex];
+
+    const kartu = document.createElement('article');
+    kartu.className = 'float-card';
+
+    const tag = document.createElement('div');
+    tag.className = 'float-tag';
+    const dot = document.createElement('span');
+    dot.className = 'float-dot';
+    dot.setAttribute('aria-hidden', 'true');
+    tag.appendChild(dot);
+    tag.appendChild(document.createTextNode('FEEDBACK_TERBARU'));
+
+    const nama = document.createElement('div');
+    nama.className = 'float-name';
+    nama.textContent = comment.name || 'ANONIM';
+
+    const pesan = document.createElement('div');
+    pesan.className = 'float-msg';
+    pesan.textContent = comment.message || '';
+
+    const waktu = document.createElement('div');
+    waktu.className = 'float-time';
+    waktu.textContent = formatLogTime(comment.created_at);
+
+    kartu.appendChild(tag);
+    kartu.appendChild(nama);
+    kartu.appendChild(pesan);
+    kartu.appendChild(waktu);
+
+    // Ganti kartu lama dengan animasi keluar
+    const lama = wrap.querySelector('.float-card');
+    if (lama) {
+        lama.classList.add('sedang-keluar');
+        setTimeout(() => lama.remove(), 380);
+    }
+    wrap.insertBefore(kartu, wrap.firstChild);
+
+    perbaruiPager();
+
+    // Jadwalkan komentar berikutnya
+    if (floatComments.length > 1) {
+        floatTimer = setTimeout(() => {
+            floatIndex = (floatIndex + 1) % floatComments.length;
+            tampilkanFloat();
+        }, FLOAT_INTERVAL);
+    }
+}
+
+// Samakan penanda halaman (dot + hitungan) dengan floatIndex
+function perbaruiPager() {
+    const wrap = floatFeedEl();
+    if (!wrap) return;
+
+    const pager = wrap.querySelector('.float-pager');
+    if (!pager) return;
+
+    pager.querySelectorAll('button').forEach((d, i) => {
+        d.classList.toggle('aktif', i === floatIndex);
+    });
+
+    const hitung = pager.querySelector('.float-hitung');
+    if (hitung) hitung.textContent = (floatIndex + 1) + '/' + floatComments.length;
+}
+
+function updateFloatFeed(comments) {
+    const wrap = floatFeedEl();
+    if (!wrap) return;
+
+    if (!Array.isArray(comments) || !comments.length) {
+        stopFloatFeed();
+        wrap.innerHTML = '';
+        floatComments = [];
+        return;
+    }
+
+    // Komentar terbaru lebih dulu, maksimal 6 supaya tidak ramai
+    floatComments = comments.slice(0, 6);
+
+    // Kalau jumlah/id berubah, mulai dari awal lagi
+    const tanda = floatComments.map(c => c.id).join(',');
+    if (tanda !== wrap.dataset.tanda) {
+        wrap.dataset.tanda = tanda;
+        floatIndex = 0;
+        wrap.innerHTML = '';
+        buildFloatPager();
+        tampilkanFloat();
+    } else {
+        buildFloatPager();
+    }
+}
+
+async function submitComment(event) {
+    event.preventDefault();
+
+    const nameInput = document.getElementById('log-name');
+    const messageInput = document.getElementById('log-message');
+    const submitBtn = document.getElementById('log-submit');
+    const parentInput = document.getElementById('log-parent');
+
+    const name = nameInput.value.trim();
+    const message = messageInput.value.trim();
+    const parentId = parentInput ? parentInput.value : '';
+
+    if (!name || !message) {
+        setLogStatus('Nama dan pesan wajib diisi.', 'error');
+        return;
+    }
+
+    if (name.length > 60 || message.length > MAX_MESSAGE_LENGTH) {
+        setLogStatus('Pesan maksimal ' + MAX_MESSAGE_LENGTH + ' karakter.', 'error');
+        return;
+    }
+
+    submitBtn.disabled = true;
+    const originalLabel = submitBtn.textContent;
+    submitBtn.textContent = 'Mengirim...';
+    setLogStatus('');
+
+    try {
+        const payload = { name: name, message: message };
+        if (parentId) payload.parent_id = Number(parentId);
+
+        const response = await fetch(COMMENTS_ENDPOINT, {
+            method: 'POST',
+            headers: Object.assign({}, commentsHeaders, { Prefer: 'return=minimal' }),
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            let detail = 'HTTP ' + response.status;
+            try {
+                const errorPayload = await response.json();
+                if (errorPayload && errorPayload.message) detail = errorPayload.message;
+            } catch (parseError) {
+                /* respons bukan JSON, abaikan */
+            }
+            throw new Error(detail);
+        }
+
+        document.getElementById('log-form').reset();
+        document.getElementById('log-charcount').textContent = '0/' + MAX_MESSAGE_LENGTH;
+        resetReplyTarget();
+        setLogStatus(
+            parentId ? 'Balasan terkirim. Terima kasih!' : 'Feedback terkirim. Terima kasih!',
+            'success'
+        );
+        await loadComments();
+    } catch (error) {
+        setLogStatus('Gagal mengirim: ' + error.message, 'error');
+        console.error('Gagal mengirim komentar:', error);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalLabel;
+    }
+}
+
+// Kecilkan / tampilkan daftar feedback lewat tombol panah.
+// Status disimpan di aria-expanded, jadi tidak hilang saat daftar di-render ulang.
+function toggleComments(force) {
+    const btn = document.getElementById('log-toggle');
+    const list = document.getElementById('log-list');
+    if (!btn || !list) return;
+
+    const isExpanded = btn.getAttribute('aria-expanded') !== 'false';
+    const shouldExpand = typeof force === 'boolean' ? force : !isExpanded;
+
+    btn.setAttribute('aria-expanded', shouldExpand ? 'true' : 'false');
+    list.classList.toggle('collapsed', !shouldExpand);
+}
+
+// Panel feedback kini mengapung: tidak lagi memblokir globe,
+// jadi auto-rotate globe tidak perlu dimatikan.
+function toggleLog(force) {
+    const overlay = document.getElementById('log-overlay');
+    if (!overlay) return;
+
+    const isHidden = overlay.classList.contains('hidden') || overlay.style.display === 'none';
+    const shouldOpen = typeof force === 'boolean' ? force : isHidden;
+
+    if (shouldOpen) {
+        overlay.classList.remove('hidden');
+        overlay.style.display = 'block';
+        overlay.setAttribute('aria-hidden', 'false');
+        if (!commentsLoaded) loadComments();
+    } else {
+        overlay.classList.add('hidden');
+        overlay.style.display = 'none';
+        overlay.setAttribute('aria-hidden', 'true');
+        resetReplyTarget();
+    }
+}
+
+// Geser panel feedback dengan menyeret headernya.
+// Posisi disimpan di CSS variable + class penanda agar tetap di tempat.
+function initLogDrag() {
+    const panel = document.getElementById('log-panel');
+    const handle = document.querySelector('.log-drag');
+    if (!panel || !handle) return;
+
+    let startX = 0;
+    let startY = 0;
+    let originLeft = 0;
+    let originTop = 0;
+    let dragging = false;
+
+    // Hitung posisi sekarang lalu kunci sebagai left/top eksplisit
+    const kunciPosisi = () => {
+        const rect = panel.getBoundingClientRect();
+        panel.style.setProperty('--log-x', rect.left + 'px');
+        panel.style.setProperty('--log-y', rect.top + 'px');
+        panel.classList.add('log-positioned');
+    };
+
+    const batasi = (x, y) => {
+        const w = panel.offsetWidth;
+        const h = panel.offsetHeight;
+        const maxX = Math.max(8, window.innerWidth - w - 8);
+        const maxY = Math.max(8, window.innerHeight - h - 8);
+        return {
+            x: Math.min(Math.max(8, x), maxX),
+            y: Math.min(Math.max(8, y), maxY),
+        };
+    };
+
+    const mulai = e => {
+        if (e.target.closest('#log-close')) return; // tombol tutup tetap normal
+        const point = e.touches ? e.touches[0] : e;
+        dragging = true;
+        startX = point.clientX;
+        startY = point.clientY;
+        kunciPosisi();
+        const rect = panel.getBoundingClientRect();
+        originLeft = rect.left;
+        originTop = rect.top;
+        panel.classList.add('log-dragging');
+        e.preventDefault();
+    };
+
+    const jalan = e => {
+        if (!dragging) return;
+        const point = e.touches ? e.touches[0] : e;
+        const pos = batasi(originLeft + (point.clientX - startX), originTop + (point.clientY - startY));
+        panel.style.setProperty('--log-x', pos.x + 'px');
+        panel.style.setProperty('--log-y', pos.y + 'px');
+        e.preventDefault();
+    };
+
+    const lepas = () => {
+        if (!dragging) return;
+        dragging = false;
+        panel.classList.remove('log-dragging');
+    };
+
+    handle.addEventListener('mousedown', mulai);
+    window.addEventListener('mousemove', jalan);
+    window.addEventListener('mouseup', lepas);
+
+    handle.addEventListener('touchstart', mulai, { passive: false });
+    window.addEventListener('touchmove', jalan, { passive: false });
+    window.addEventListener('touchend', lepas);
+
+    // Kalau layar diubah ukurannya, pastikan panel tetap di dalam layar
+    window.addEventListener('resize', () => {
+        if (!panel.classList.contains('log-positioned')) return;
+        const rect = panel.getBoundingClientRect();
+        const pos = batasi(rect.left, rect.top);
+        panel.style.setProperty('--log-x', pos.x + 'px');
+        panel.style.setProperty('--log-y', pos.y + 'px');
+    });
+}
+
+// Buka / tutup daftar anggota kelompok di panel utama
+function toggleMembers(force) {
+    const btn = document.getElementById('btn-members');
+    const list = document.getElementById('group-members');
+    if (!btn || !list) return;
+
+    const isExpanded = btn.getAttribute('aria-expanded') !== 'false';
+    const shouldExpand = typeof force === 'boolean' ? force : !isExpanded;
+
+    btn.setAttribute('aria-expanded', shouldExpand ? 'true' : 'false');
+    list.classList.toggle('hidden', !shouldExpand);
+    list.style.display = shouldExpand ? 'flex' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('log-form');
+    const messageInput = document.getElementById('log-message');
+    const charCount = document.getElementById('log-charcount');
+    const refreshBtn = document.getElementById('log-refresh');
+    const listEl = document.getElementById('log-list');
+    const replyCancelBtn = document.getElementById('log-reply-cancel');
+    const toggleBtn = document.getElementById('log-toggle');
+    const membersBtn = document.getElementById('btn-members');
+
+    if (form) form.addEventListener('submit', submitComment);
+    if (refreshBtn) refreshBtn.addEventListener('click', loadComments);
+    if (toggleBtn) toggleBtn.addEventListener('click', () => toggleComments());
+    if (membersBtn) membersBtn.addEventListener('click', () => toggleMembers());
+
+    initLogDrag();
+
+    // Delegasi klik: tombol [ BALAS ] ada di dalam daftar yang isinya dinamis
+    if (listEl) {
+        listEl.addEventListener('click', e => {
+            const btn = e.target.closest('[data-action="reply"]');
+            if (!btn) return;
+            setReplyTarget(btn.dataset.id, btn.dataset.name);
+        });
+    }
+
+    if (replyCancelBtn) {
+        replyCancelBtn.addEventListener('click', () => {
+            resetReplyTarget();
+            setLogStatus('');
+        });
+    }
+
+    if (messageInput && charCount) {
+        messageInput.addEventListener('input', () => {
+            charCount.textContent = messageInput.value.length + '/' + MAX_MESSAGE_LENGTH;
+        });
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') toggleLog(false);
+    });
+
+    loadComments();
+});

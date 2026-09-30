@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SWOT Indonesia - HUD Interface</title>
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
     <!-- Background Effects -->
@@ -44,8 +44,32 @@
     
     <!-- UI Controls -->
     <div class="ui-container">
+      <div class="ui-scroll">
         <h1>[ SWOT_ANALYSIS ]</h1>
         <p class="subtitle">TARGET: INDONESIA</p>
+
+        <!-- Info Kelompok -->
+        <div class="group-block">
+            <div class="group-line">
+                <span class="group-name">KELOMPOK 3</span>
+                <span class="group-sep">//</span>
+                <span class="group-class">XII SIJA 2</span>
+            </div>
+            <button id="btn-members" class="group-toggle" type="button" aria-expanded="true" aria-controls="group-members">
+                <span class="group-chevron" aria-hidden="true"></span>
+                <span>Anggota <span class="group-total">(7)</span></span>
+            </button>
+            <ul id="group-members" class="group-members">
+                <li><span class="member-no">5</span><span>Azahwa Celina Latifa</span></li>
+                <li><span class="member-no">7</span><span>Benedictus Sandyawan Winarko</span></li>
+                <li><span class="member-no">13</span><span>Feliks Setyaji Purbo Asmoro</span></li>
+                <li><span class="member-no">16</span><span>Haidar Rafi Jaelani</span></li>
+                <li><span class="member-no">20</span><span>Khalisa Fazila Ramadhani</span></li>
+                <li><span class="member-no">23</span><span>Lauretta Josephine</span></li>
+                <li><span class="member-no">26</span><span>Muhammad Raihan Miqdad</span></li>
+            </ul>
+        </div>
+
         <div class="buttons">
             <button id="btn-strength" onclick="setCategory('strength')">
                 <span class="bracket">[</span> STRENGTH <span class="bracket">]</span>
@@ -63,10 +87,65 @@
         <div class="instructions">
             > SELECT PARAMETER TO INITIATE SCAN...
         </div>
+      </div>
+    </div>
+
+    <!-- Panel Feedback -->
+    <button id="btn-log" onclick="toggleLog()" type="button">
+        <span class="bracket">[</span> Feedback <span class="bracket">]</span>
+    </button>
+
+    <!-- Feedback mengapung di layar (bergantian) -->
+    <div id="float-feed" role="region" aria-label="Feedback terbaru"></div>
+
+    <div id="log-overlay" class="hidden" style="display: none" aria-hidden="true">
+        <div id="log-panel" role="dialog" aria-label="Panel feedback">
+            <div class="log-header log-drag" title="Geser untuk memindahkan panel">
+                <span class="log-grip" aria-hidden="true"></span>
+                <div class="log-heading">
+                    <h2>Kirim Feedback</h2>
+                    <p class="log-sub">Punya saran atau pendapat? Tulis di sini.</p>
+                </div>
+                <button id="log-close" onclick="toggleLog(false)" type="button">[ X ]</button>
+            </div>
+
+            <form id="log-form" autocomplete="off" novalidate>
+                <div id="log-reply-banner" class="log-reply-banner hidden" style="display: none">
+                    <span>Membalas: <strong id="log-reply-target">-</strong></span>
+                    <button id="log-reply-cancel" class="log-reply-cancel" type="button">[ Batal ]</button>
+                </div>
+                <input id="log-parent" name="parent_id" type="hidden" value="" />
+
+                <label for="log-name">Nama</label>
+                <input id="log-name" name="name" type="text" maxlength="60" placeholder="Nama kamu" required />
+
+                <label for="log-message">Pesan</label>
+                <textarea id="log-message" name="message" rows="3" maxlength="500" placeholder="Tulis pesan kamu..." required></textarea>
+
+                <div class="log-form-footer">
+                    <span id="log-charcount" class="log-charcount">0/500</span>
+                    <button id="log-submit" class="log-submit" type="submit">Kirim</button>
+                </div>
+            </form>
+
+            <p id="log-status" class="log-status" role="status" aria-live="polite"></p>
+
+            <div class="log-list-head">
+                <button id="log-toggle" class="log-toggle" type="button" aria-expanded="true" aria-controls="log-list">
+                    <span class="log-chevron" aria-hidden="true"></span>
+                    <span>Feedback <span id="log-count">(0)</span></span>
+                </button>
+                <button id="log-refresh" type="button">[ Muat Ulang ]</button>
+            </div>
+
+            <div id="log-list" class="log-list" aria-live="polite">
+                <p class="log-empty">Memuat feedback...</p>
+            </div>
+        </div>
     </div>
 
     <!-- Details Panel -->
-    <div id="detail-modal" class="hidden">
+    <div id="detail-modal" class="hidden" style="display: none" aria-hidden="true">
         <div class="modal-tag" id="detail-tag">// DATA</div>
         <h2 id="detail-title">Title</h2>
         <p id="detail-desc">Description</p>
@@ -99,8 +178,14 @@
         <button onclick="closeModal()">> CLOSE_PANEL</button>
     </div>
 
-    <script src="//unpkg.com/three"></script>
-    <script src="//unpkg.com/globe.gl"></script>
-    <script src="script.js"></script>
+    <script src="https://unpkg.com/globe.gl"></script>
+    <script src="script.js?v=13"></script>
 </body>
 </html>
+
+
+
+
+
+
+

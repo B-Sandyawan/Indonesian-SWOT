@@ -51,6 +51,14 @@ body {
     pointer-events: none;
 }
 
+/* ========== UTILITAS ========== */
+/* Jaring pengaman: elemen dengan class/atribut hidden tidak pernah ikut tampil,
+   walau CSS bagian lain gagal dimuat atau kalah prioritas. */
+[hidden],
+.hidden:not(#detail-modal) {
+    display: none !important;
+}
+
 /* ========== GLOBE ========== */
 #globeViz {
     position: absolute;
@@ -131,9 +139,31 @@ body {
     padding: 25px;
     border: 1px solid var(--cyan);
     box-shadow: 0 0 15px rgba(0,243,255,0.15), inset 0 0 20px rgba(0,243,255,0.05);
-    width: 280px;
+    width: 332px; /* 280px isi + 25px padding kiri-kanan + 2px border */
+    box-sizing: border-box; /* agar max-height ikut menghitung padding & border */
     backdrop-filter: blur(8px);
+
+    /* Kalau isi panel lebih tinggi dari layar, panelnya bisa digulir
+       sehingga bagian bawah tetap bisa dijangkau. */
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
 }
+
+/* Wadah gulir: dipisah dari .ui-container supaya aksen sudut HUD (::before/::after)
+   tidak ikut terpotong oleh overflow. */
+.ui-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    margin: -6px;
+    padding: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 243, 255, 0.4) rgba(0, 243, 255, 0.05);
+}
+.ui-scroll::-webkit-scrollbar { width: 6px; }
+.ui-scroll::-webkit-scrollbar-track { background: rgba(0, 243, 255, 0.05); }
+.ui-scroll::-webkit-scrollbar-thumb { background: rgba(0, 243, 255, 0.4); }
 .ui-container::before {
     content: ''; position: absolute; top: -4px; left: -4px;
     width: 16px; height: 16px;
@@ -152,9 +182,122 @@ h1 {
     letter-spacing: 2px;
 }
 .subtitle {
-    margin: 0 0 25px 0;
+    margin: 0 0 18px 0;
     font-size: 13px;
     color: #5ac8d8;
+}
+
+/* ========== INFO KELOMPOK ========== */
+.group-block {
+    text-align: left;
+    border-left: 2px solid rgba(0, 243, 255, 0.45);
+    padding: 8px 0 8px 10px;
+    margin: 0 0 20px 0;
+}
+.group-line {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+.group-name {
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(0, 243, 255, 0.45);
+}
+.group-sep {
+    color: rgba(0, 243, 255, 0.4);
+}
+.group-class {
+    color: #5ac8d8;
+}
+
+.group-toggle {
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    margin-top: 8px;
+    border: none;
+    background: transparent;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #5ac8d8;
+}
+.group-toggle:hover {
+    transform: none;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: var(--cyan);
+}
+.group-total {
+    opacity: 0.7;
+}
+
+/* Panah kecil: bawah saat terbuka, kanan saat dikecilkan */
+.group-chevron {
+    width: 0;
+    height: 0;
+    flex-shrink: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #5ac8d8;
+    transition: transform 0.25s ease;
+}
+.group-toggle:hover .group-chevron {
+    border-top-color: var(--cyan);
+}
+.group-toggle[aria-expanded="false"] .group-chevron {
+    transform: rotate(-90deg);
+}
+
+.group-members {
+    list-style: none;
+    margin: 8px 0 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.group-members.hidden {
+    display: none;
+}
+.group-members li {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    font-size: 11px;
+    line-height: 1.45;
+    color: #9fdfe8;
+    opacity: 0;
+    animation: group-member-in 0.3s ease-out forwards;
+}
+.group-members li:nth-child(1) { animation-delay: 0.03s; }
+.group-members li:nth-child(2) { animation-delay: 0.08s; }
+.group-members li:nth-child(3) { animation-delay: 0.13s; }
+.group-members li:nth-child(4) { animation-delay: 0.18s; }
+.group-members li:nth-child(5) { animation-delay: 0.23s; }
+.group-members li:nth-child(6) { animation-delay: 0.28s; }
+.group-members li:nth-child(7) { animation-delay: 0.33s; }
+@keyframes group-member-in {
+    from { opacity: 0; transform: translateX(-6px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+.member-no {
+    flex-shrink: 0;
+    min-width: 18px;
+    color: var(--cyan);
+    opacity: 0.75;
+    font-size: 10px;
+}
+.member-no::before {
+    content: '(';
+}
+.member-no::after {
+    content: ')';
 }
 
 .buttons { display: flex; flex-direction: column; gap: 12px; }
@@ -399,4 +542,877 @@ button:hover {
 }
 #detail-modal button:hover {
     transform: none;
+}
+
+/* ========== GUEST LOG / COMMENTS ========== */
+#btn-log {
+    position: absolute;
+    bottom: 20px;
+    right: 40px;
+    z-index: 15;
+    width: auto;
+    padding: 10px 18px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    background: rgba(2, 10, 16, 0.85);
+    backdrop-filter: blur(8px);
+}
+#btn-log:hover {
+    transform: translateY(-3px);
+}
+
+/* ===== Panel feedback mengapung (bukan modal) =====
+   Overlay tidak lagi menutup layar, jadi globe & tombol lain
+   tetap bisa dipakai saat panel terbuka. */
+#log-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    /* Lapisan ini hanya wadah; klik diteruskan ke elemen di bawahnya */
+    pointer-events: none;
+    padding: 20px;
+}
+#log-overlay.hidden {
+    display: none;
+}
+
+/* Panelnya sendiri tetap bisa menerima klik */
+#log-panel {
+    pointer-events: auto;
+    position: fixed;
+    left: var(--log-x, auto);
+    top: var(--log-y, auto);
+    width: min(420px, calc(100vw - 40px));
+    box-sizing: border-box; /* lebar total termasuk padding, aman di layar sempit */
+    max-height: min(72vh, 640px);
+    overflow-y: auto;
+    --log-pad: 22px;
+    background: rgba(2, 10, 16, 0.96);
+    border: 1px solid var(--cyan);
+    padding: var(--log-pad);
+    box-shadow: 0 0 25px rgba(0, 243, 255, 0.2), inset 0 0 40px rgba(0, 243, 255, 0.04);
+    backdrop-filter: blur(8px);
+}
+
+/* Posisi awal: mengapung di tengah bawah.
+   Sengaja TIDAK di kanan-bawah, karena kolom kanan dipakai panel menu SWOT
+   sehingga panel pasti menutupi tombol menu. Setelah digeser, posisi
+   diatur lewat --log-x / --log-y. */
+#log-panel:not(.log-positioned) {
+    left: 0;
+    right: 0;
+    bottom: 20px;
+    top: auto;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Hasil geser: lepaskan aturan posisi awal supaya left/top berlaku */
+#log-panel.log-positioned {
+    right: auto;
+    bottom: auto;
+    margin-left: 0;
+    margin-right: 0;
+}
+#log-panel::before {
+    content: '';
+    position: absolute;
+    top: -4px; left: -4px;
+    width: 16px; height: 16px;
+    border-top: 2px solid var(--cyan);
+    border-left: 2px solid var(--cyan);
+}
+#log-panel::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; right: -4px;
+    width: 16px; height: 16px;
+    border-bottom: 2px solid var(--cyan);
+    border-right: 2px solid var(--cyan);
+}
+#log-panel::-webkit-scrollbar { width: 6px; }
+#log-panel::-webkit-scrollbar-track { background: rgba(0, 243, 255, 0.05); }
+#log-panel::-webkit-scrollbar-thumb { background: rgba(0, 243, 255, 0.4); }
+
+/* Isi panel tetap bisa diseleksi walau body user-select:none */
+#log-panel input,
+#log-panel textarea,
+.log-item-msg,
+.log-item-name {
+    user-select: text;
+}
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+
+    /* Header menempel di atas panel: walaupun isi digulir, pegangan geser
+       dan tombol tutup tetap terlihat. Margin negatif memakai --log-pad
+       yang sama dengan padding panel supaya selalu sinkron. */
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: calc(var(--log-pad) * -1) calc(var(--log-pad) * -1) 18px;
+    padding: var(--log-pad) var(--log-pad) 14px;
+    background: rgba(2, 10, 16, 0.98);
+    border-bottom: 1px solid rgba(0, 243, 255, 0.18);
+}
+
+/* Header dipakai sebagai pegangan geser panel */
+.log-drag {
+    cursor: grab;
+    touch-action: none;
+}
+.log-drag:active {
+    cursor: grabbing;
+}
+
+/* Titik-titik kecil sebagai penanda area geser */
+.log-grip {
+    flex-shrink: 0;
+    width: 10px;
+    height: 16px;
+    margin-top: 3px;
+    background-image: radial-gradient(circle, rgba(0, 243, 255, 0.6) 1px, transparent 1.5px);
+    background-size: 5px 5px;
+    opacity: 0.7;
+}
+.log-drag:hover .log-grip {
+    opacity: 1;
+}
+.log-heading {
+    min-width: 0;
+}
+#log-close {
+    width: auto;
+    flex-shrink: 0;
+    padding: 4px 10px;
+    font-size: 13px;
+    border-color: var(--dark-cyan);
+}
+#log-close:hover {
+    transform: none;
+    border-color: var(--red);
+    color: var(--red);
+}
+
+#log-panel h2 {
+    margin: 0 0 4px 0;
+    font-size: 20px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px var(--cyan);
+}
+.log-sub {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #7fd4e2;
+    opacity: 0.9;
+}
+
+#log-form {
+    display: flex;
+    flex-direction: column;
+}
+#log-form label {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--cyan);
+    opacity: 0.8;
+    margin-bottom: 6px;
+}
+#log-form input,
+#log-form textarea {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    color: #d9fbff;
+    background: rgba(0, 243, 255, 0.08);
+    border: 1px solid rgba(0, 243, 255, 0.45);
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    outline: none;
+    resize: vertical;
+    transition: 0.25s;
+    width: 100%;
+}
+#log-form input:focus,
+#log-form textarea:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 14px rgba(0, 243, 255, 0.35);
+    background: rgba(0, 243, 255, 0.13);
+}
+#log-form input::placeholder,
+#log-form textarea::placeholder {
+    color: rgba(0, 243, 255, 0.45);
+}
+
+.log-form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+.log-charcount {
+    font-size: 11px;
+    opacity: 0.55;
+}
+.log-submit {
+    width: auto;
+    text-align: center;
+    letter-spacing: 1px;
+    background: rgba(0, 243, 255, 0.12);
+    border-color: var(--cyan);
+}
+.log-submit:hover {
+    transform: none;
+    box-shadow: 0 0 16px rgba(0, 243, 255, 0.4);
+}
+.log-submit:disabled {
+    opacity: 0.45;
+    cursor: wait;
+    box-shadow: none;
+}
+
+.log-status {
+    margin: 14px 0 0 0;
+    font-size: 12px;
+    min-height: 16px;
+}
+.log-status[data-type="success"] { color: var(--green); text-shadow: 0 0 8px rgba(0, 255, 102, 0.5); }
+.log-status[data-type="error"] { color: var(--red); text-shadow: 0 0 8px rgba(255, 0, 60, 0.5); }
+
+.log-list-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin: 22px 0 10px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(0, 243, 255, 0.2);
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: #5ac8d8;
+}
+#log-refresh {
+    width: auto;
+    padding: 4px 10px;
+    font-size: 12px;
+    border-color: var(--dark-cyan);
+    color: #5ac8d8;
+}
+#log-refresh:hover {
+    transform: none;
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+/* Judul daftar log dibuat seperti teks biasa, tapi bisa diklik */
+.log-toggle {
+    width: auto;
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: #5ac8d8;
+}
+.log-toggle:hover {
+    transform: none;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: var(--cyan);
+}
+
+/* Panah: menghadap bawah saat terbuka, menghadap kanan saat dikecilkan */
+.log-chevron {
+    width: 0;
+    height: 0;
+    flex-shrink: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #5ac8d8;
+    transition: transform 0.25s ease;
+}
+.log-toggle:hover .log-chevron {
+    border-top-color: var(--cyan);
+}
+.log-toggle[aria-expanded="false"] .log-chevron {
+    transform: rotate(-90deg);
+}
+
+/* Saat dikecilkan, daftar log disembunyikan */
+.log-list.collapsed {
+    display: none;
+}
+
+.log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.log-empty {
+    margin: 0;
+    font-size: 12px;
+    opacity: 0.55;
+}
+.log-item {
+    border: 1px solid rgba(0, 243, 255, 0.22);
+    border-left: 3px solid var(--cyan);
+    background: rgba(0, 243, 255, 0.04);
+    padding: 10px 12px;
+}
+.log-item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+.log-item-name {
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(0, 243, 255, 0.4);
+}
+.log-item-name::before {
+    content: '> ';
+    opacity: 0.6;
+}
+.log-item-time {
+    font-size: 10px;
+    opacity: 0.5;
+    white-space: nowrap;
+}
+.log-item-msg {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #b9dde0;
+    word-break: break-word;
+}
+
+/* Isi pesan mendukung markdown ringan */
+.log-item-msg p { margin: 0 0 6px; }
+.log-item-msg p:last-child { margin-bottom: 0; }
+.log-item-msg ul { margin: 4px 0 6px; padding-left: 18px; list-style: none; }
+.log-item-msg li { position: relative; padding-left: 14px; margin-bottom: 3px; }
+.log-item-msg li::before {
+    content: '>';
+    position: absolute;
+    left: 0;
+    color: var(--cyan);
+    opacity: 0.8;
+}
+.log-item-msg a {
+    color: var(--cyan);
+    text-decoration: underline;
+    word-break: break-all;
+}
+.log-item-msg code {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    background: rgba(0, 243, 255, 0.12);
+    border: 1px solid rgba(0, 243, 255, 0.25);
+    padding: 0 4px;
+    color: #aef4ff;
+}
+.log-item-msg strong { color: #e6ffff; }
+.log-item-msg em { color: #9fe8f5; }
+
+/* Pesan panjang dilipat agar tidak menutupi panel */
+.log-item-msg-wrap.is-clamped .log-item-msg.clamped {
+    max-height: 4.9em;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+}
+.log-msg-toggle {
+    width: auto;
+    margin-top: 6px;
+    padding: 3px 8px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    border-color: var(--dark-cyan);
+    color: #5ac8d8;
+    background: transparent;
+}
+.log-msg-toggle:hover {
+    transform: none;
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+/* Kepala item: nama/tujuan di kiri, waktu + tombol balas di kanan */
+.log-item-head-left {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+.log-item-head-right {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.log-item-to {
+    font-size: 11px;
+    color: #5ac8d8;
+    opacity: 0.9;
+}
+.log-reply-btn {
+    width: auto;
+    padding: 2px 7px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    border-color: var(--dark-cyan);
+    color: #5ac8d8;
+    background: transparent;
+}
+.log-reply-btn:hover {
+    transform: none;
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+/* Balasan berjenjang */
+.log-item-replies {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 6px 0 4px 14px;
+    padding-left: 10px;
+    border-left: 2px solid rgba(0, 243, 255, 0.28);
+}
+.log-item-reply {
+    border-left-width: 2px;
+    border-left-color: rgba(0, 243, 255, 0.55);
+    background: rgba(0, 243, 255, 0.06);
+}
+
+/* Banner mode balasan di form */
+.log-reply-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--cyan);
+    border: 1px dashed rgba(0, 243, 255, 0.5);
+    background: rgba(0, 243, 255, 0.08);
+    padding: 6px 8px;
+    margin-bottom: 12px;
+}
+.log-reply-banner strong { color: var(--cyan); }
+.log-reply-cancel {
+    width: auto;
+    padding: 2px 7px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    border-color: var(--dark-cyan);
+    color: #5ac8d8;
+    background: transparent;
+}
+.log-reply-cancel:hover {
+    transform: none;
+    border-color: var(--red);
+    color: var(--red);
+}
+
+.log-notice {
+    margin: 10px 0 0;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--yellow);
+    opacity: 0.85;
+}
+
+/* Teks di panel masukan pakai huruf normal (bukan kapital semua)
+   supaya lebih enak dibaca daripada gaya HUD tombol utama. */
+#log-panel button {
+    text-transform: none;
+}
+
+/* ==========================================================
+   FEEDBACK MELAYANG (bergantian di layar)
+   Menampilkan satu komentar dalam satu waktu, berganti otomatis.
+   ========================================================== */
+#float-feed {
+    position: fixed;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 18;
+    width: min(300px, calc(100vw - 40px));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none; /* tidak menghalangi globe */
+}
+
+/* Kartu komentar */
+.float-card {
+    pointer-events: auto;
+    position: relative;
+    background: rgba(2, 10, 16, 0.92);
+    border: 1px solid rgba(0, 243, 255, 0.4);
+    border-left: 3px solid var(--cyan);
+    padding: 10px 12px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 18px rgba(0, 243, 255, 0.12);
+    animation: float-in 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+}
+.float-card:hover {
+    border-color: rgba(0, 243, 255, 0.85);
+    box-shadow: 0 0 24px rgba(0, 243, 255, 0.28);
+    transform: translateX(4px);
+}
+.float-card.sedang-keluar {
+    animation: float-out 0.4s ease-in forwards;
+}
+@keyframes float-in {
+    from { opacity: 0; transform: translateX(-22px) scale(0.96); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes float-out {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(-14px); }
+}
+
+/* Label kecil di atas kartu */
+.float-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #5ac8d8;
+    opacity: 0.8;
+    margin-bottom: 5px;
+}
+.float-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+    animation: blink 1.6s infinite;
+}
+
+/* Nama & isi komentar */
+.float-name {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(0, 243, 255, 0.45);
+    margin-bottom: 3px;
+}
+.float-msg {
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: #b9dde0;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.float-time {
+    font-size: 9px;
+    opacity: 0.55;
+    margin-top: 5px;
+}
+
+/* Penanda halaman (dot) di bawah kartu */
+.float-pager {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+.float-pager button {
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 243, 255, 0.4);
+    background: transparent;
+    transition: 0.25s;
+}
+.float-pager button:hover {
+    transform: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+}
+.float-pager button.aktif {
+    background: var(--cyan);
+    border-color: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+}
+.float-hitung {
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #5ac8d8;
+    opacity: 0.7;
+    margin-left: 4px;
+}
+
+/* Hormati preferensi pengguna yang tidak ingin animasi */
+@media (prefers-reduced-motion: reduce) {
+    .float-card,
+    .float-card.sedang-keluar,
+    .float-dot {
+        animation: none;
+    }
+    .float-card:hover {
+        transform: none;
+    }
+}
+
+@media (max-width: 900px) {
+    /* Di layar sempit, menu SWOT mengisi sisi kanan, jadi umpan melayang
+       dipindah ke kiri-bawah supaya tidak bertumpuk. */
+    #float-feed {
+        left: 16px;
+        top: auto;
+        bottom: 20px;
+        transform: none;
+        width: min(320px, calc(100vw - 32px));
+    }
+
+    /* Kartu tidak menangkap klik di layar sempit, supaya menu di bawahnya
+       tetap bisa ditekan. Navigasi tetap lewat titik penanda. */
+    #float-feed,
+    .float-card {
+        pointer-events: none;
+    }
+    .float-pager {
+        pointer-events: auto;
+    }
+    .float-card:hover {
+        transform: none;
+    }
+}
+
+@media (max-width: 700px) {
+    #float-feed {
+        bottom: 62px;
+        width: calc(100vw - 32px);
+    }
+}
+
+/* ==========================================================
+   EFEK INTERAKTIF PANEL FEEDBACK (tema HUD)
+   Semua efek hanya memakai transform/opacity/box-shadow
+   supaya tetap ringan dan tidak memicu reflow.
+   ========================================================== */
+
+/* Tombol pembuka: denyut halus seperti perangkat siaga */
+#btn-log {
+    animation: log-beacon 2.6s ease-in-out infinite;
+}
+@keyframes log-beacon {
+    0%, 100% { box-shadow: 0 0 10px rgba(0, 243, 255, 0.25); }
+    50%      { box-shadow: 0 0 20px rgba(0, 243, 255, 0.55), 0 0 34px rgba(0, 243, 255, 0.2); }
+}
+
+/* Panel: muncul naik + glow saat dibuka */
+#log-panel {
+    animation: log-panel-in 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+@keyframes log-panel-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Sudut panel berkedip halus, bergantian antar sudut */
+#log-panel::before {
+    animation: log-corner 3.2s ease-in-out infinite;
+}
+#log-panel::after {
+    animation: log-corner 3.2s ease-in-out infinite reverse;
+}
+@keyframes log-corner {
+    0%, 100% { opacity: 0.45; }
+    50%      { opacity: 1; box-shadow: 0 0 10px rgba(0, 243, 255, 0.5); }
+}
+
+/* Saat digeser: glow lebih terang & tidak ada transisi
+   supaya panel mengikuti kursor tanpa tertinggal */
+#log-panel.log-dragging {
+    box-shadow: 0 0 34px rgba(0, 243, 255, 0.45), inset 0 0 40px rgba(0, 243, 255, 0.06);
+}
+
+/* Input: garis bawah menyala saat fokus */
+#log-form input,
+#log-form textarea {
+    background-image: linear-gradient(rgba(0, 243, 255, 0.85), rgba(0, 243, 255, 0.85));
+    background-repeat: no-repeat;
+    background-size: 0% 1px;
+    background-position: 50% 100%;
+    transition: border-color 0.25s, box-shadow 0.25s, background-color 0.25s, background-size 0.3s;
+}
+#log-form input:focus,
+#log-form textarea:focus {
+    background-size: 100% 1px;
+}
+
+/* Tombol: kilau menyapu saat disorot */
+.log-submit,
+.log-reply-btn,
+.log-reply-cancel,
+#log-close,
+#log-refresh,
+.log-msg-toggle {
+    position: relative;
+    overflow: hidden;
+}
+.log-submit::after,
+.log-reply-btn::after,
+.log-reply-cancel::after,
+#log-close::after,
+#log-refresh::after,
+.log-msg-toggle::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(0, 243, 255, 0.28), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.45s ease;
+    pointer-events: none;
+}
+.log-submit:hover::after,
+.log-reply-btn:hover::after,
+.log-reply-cancel:hover::after,
+#log-close:hover::after,
+#log-refresh:hover::after,
+.log-msg-toggle:hover::after {
+    left: 130%;
+}
+
+/* Item feedback: masuk berurutan + reaksi saat disorot */
+.log-item {
+    /* fill-mode "backwards" (bukan "both"): saat jeda tetap tersembunyi,
+       tapi setelah animasi selesai transform dikembalikan ke elemen
+       supaya efek hover (translateX) bisa bekerja. */
+    animation: log-item-in 0.34s ease-out backwards;
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s, background-color 0.25s;
+}
+.log-item:hover {
+    border-color: rgba(0, 243, 255, 0.65);
+    box-shadow: 0 0 16px rgba(0, 243, 255, 0.16);
+    background: rgba(0, 243, 255, 0.085);
+    transform: translateX(3px);
+}
+@keyframes log-item-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Balasan masuk bergantian agar terasa hidup */
+.log-item-reply {
+    animation-name: log-reply-in;
+}
+@keyframes log-reply-in {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Nama pengirim berdenyut lembut seperti label HUD */
+.log-item-name {
+    animation: log-name-glow 3.4s ease-in-out infinite;
+}
+@keyframes log-name-glow {
+    0%, 100% { text-shadow: 0 0 8px rgba(0, 243, 255, 0.35); }
+    50%      { text-shadow: 0 0 14px rgba(0, 243, 255, 0.7); }
+}
+
+/* Banner balas: kedip perlahan sebagai penanda mode aktif */
+.log-reply-banner {
+    animation: log-reply-pulse 2s ease-in-out infinite;
+}
+@keyframes log-reply-pulse {
+    0%, 100% { border-color: rgba(0, 243, 255, 0.35); background: rgba(0, 243, 255, 0.06); }
+    50%      { border-color: rgba(0, 243, 255, 0.85); background: rgba(0, 243, 255, 0.13); }
+}
+
+/* Status sukses/gagal ikut memberi sinyal visual */
+.log-status[data-type="success"] { animation: log-blink-soft 0.5s ease-out 2; }
+.log-status[data-type="error"]   { animation: log-blink-soft 0.5s ease-out 2; }
+@keyframes log-blink-soft {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+}
+
+/* Panah daftar: bergerak sedikit agar terlihat bisa diklik */
+.log-toggle:hover .log-chevron {
+    animation: log-chevron-nudge 0.9s ease-in-out infinite;
+}
+@keyframes log-chevron-nudge {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(2px); }
+}
+
+/* Hormati preferensi pengguna yang tidak ingin animasi */
+@media (prefers-reduced-motion: reduce) {
+    #btn-log,
+    #log-panel,
+    #log-panel::before,
+    #log-panel::after,
+    .log-item,
+    .log-item-reply,
+    .log-item-name,
+    .log-reply-banner,
+    .log-status,
+    .log-toggle:hover .log-chevron {
+        animation: none;
+    }
+    .log-item:hover,
+    #btn-log:hover {
+        transform: none;
+    }
+    .log-submit::after,
+    .log-reply-btn::after,
+    .log-reply-cancel::after,
+    #log-close::after,
+    #log-refresh::after,
+    .log-msg-toggle::after {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    #btn-log {
+        bottom: 16px;
+        right: 16px;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    /* Panel mengapung menyesuaikan tombolnya di layar sempit */
+    #log-panel:not(.log-positioned) {
+        left: 16px;
+        right: 16px;
+        bottom: 70px;
+        width: auto;
+        margin: 0;
+    }
+    #log-panel {
+        max-height: min(66vh, 560px);
+        --log-pad: 18px;
+    }
 }
