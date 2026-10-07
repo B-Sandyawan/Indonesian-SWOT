@@ -1,3 +1,7 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 :root {
     --cyan: #00f3ff;
     --dark-cyan: #004d66;
@@ -5,16 +9,31 @@
     --red: #ff003c;
     --yellow: #ffea00;
     --green: #00ff66;
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
 }
 
 body {
+    /* Dikunci total: tidak bisa digeser/di-scroll ke area hitam mana pun,
+       di browser HP sekalipun (iOS mengabaikan overflow saja). */
+    position: fixed;
+    inset: 0;
+    width: 100%;
     margin: 0;
     padding: 0;
     font-family: 'Share Tech Mono', monospace;
     background-color: var(--bg);
     color: var(--cyan);
     overflow: hidden;
+    overscroll-behavior: none;
     user-select: none;
+    -webkit-text-size-adjust: 100%;
 }
 
 /* ========== BACKGROUND EFFECTS ========== */
@@ -22,7 +41,8 @@ body {
     position: absolute;
     bottom: -20vh;
     left: 0;
-    width: 100vw;
+    right: 0;
+    width: auto;
     height: 60vh;
     background-image: 
         linear-gradient(rgba(0,243,255,0.15) 1px, transparent 1px),
@@ -64,7 +84,30 @@ body {
     position: absolute;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
+    width: 100dvw; height: 100dvh;
     z-index: 1;
+}
+#globeViz {
+    overflow: hidden;
+    touch-action: none;
+}
+#globeViz canvas {
+    display: block;
+    touch-action: none;
+}
+/* Marker globe: area sentuh besar, ikon tetap tajam */
+.globe-marker {
+    cursor: pointer;
+    pointer-events: auto;
+    padding: 12px;
+    box-sizing: content-box;
+    transform: translate(-32px, -32px);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+.globe-marker svg {
+    display: block;
+    overflow: visible;
 }
 
 /* ========== HUD DECORATORS ========== */
@@ -177,9 +220,10 @@ body {
 
 h1 {
     margin: 0 0 5px 0;
-    font-size: 22px;
+    font-size: clamp(18px, 2.4vw, 22px);
     text-shadow: 0 0 10px var(--cyan);
     letter-spacing: 2px;
+    overflow-wrap: anywhere;
 }
 .subtitle {
     margin: 0 0 18px 0;
@@ -307,18 +351,43 @@ button {
     color: var(--cyan);
     border: 1px solid var(--dark-cyan);
     padding: 12px 15px;
+    min-height: 44px;
     cursor: pointer;
     font-family: 'Share Tech Mono', monospace;
     font-size: 15px;
     text-align: left;
     transition: 0.3s;
     text-transform: uppercase;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
-button:hover {
-    background: rgba(0,243,255,0.12);
-    border-color: var(--cyan);
-    box-shadow: 0 0 12px rgba(0,243,255,0.3);
-    transform: translateX(-4px);
+@media (hover: hover) {
+    button:hover {
+        background: rgba(0,243,255,0.12);
+        border-color: var(--cyan);
+        box-shadow: 0 0 12px rgba(0,243,255,0.3);
+        transform: translateX(-4px);
+    }
+}
+button:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+}
+.buttons button {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Tombol-tombol kecil tidak ikut tinggi sentuh 44px agar tidak melar */
+.float-pager button,
+.group-toggle,
+.log-toggle,
+.log-msg-toggle,
+.log-reply-btn,
+.log-reply-cancel,
+#log-close,
+#log-refresh {
+    min-height: 0;
 }
 .bracket { color: rgba(0,243,255,0.35); margin: 0 6px; }
 
@@ -353,13 +422,15 @@ button:hover {
     align-items: center;
 }
 .threat-warning-text {
-    font-size: 2.5rem;
+    font-size: clamp(1.1rem, 4.5vw, 2.5rem);
     color: var(--red);
     text-shadow: 0 0 20px var(--red);
     border: 2px solid var(--red);
     padding: 12px 25px;
     background: rgba(255,0,0,0.08);
     opacity: 0;
+    max-width: calc(100vw - 32px);
+    text-align: center;
 }
 
 .threat-active #threat-overlay {
@@ -419,7 +490,7 @@ button:hover {
 
 /* ========== DETAIL MODAL ========== */
 #detail-modal {
-    position: absolute;
+    position: fixed;
     top: 50%;
     left: 40px;
     transform: translateY(-50%);
@@ -428,7 +499,9 @@ button:hover {
     border: 1px solid var(--cyan);
     z-index: 20;
     width: 360px;
+    max-width: calc(100vw - 80px);
     max-height: 82vh;
+    max-height: 82dvh;
     overflow-y: auto;
     box-shadow: 0 0 20px rgba(0,243,255,0.15);
     backdrop-filter: blur(10px);
@@ -557,8 +630,10 @@ button:hover {
     background: rgba(2, 10, 16, 0.85);
     backdrop-filter: blur(8px);
 }
-#btn-log:hover {
-    transform: translateY(-3px);
+@media (hover: hover) {
+    #btn-log:hover {
+        transform: translateY(-3px);
+    }
 }
 
 /* ===== Panel feedback mengapung (bukan modal) =====
@@ -1180,37 +1255,8 @@ button:hover {
     }
 }
 
-@media (max-width: 900px) {
-    /* Di layar sempit, menu SWOT mengisi sisi kanan, jadi umpan melayang
-       dipindah ke kiri-bawah supaya tidak bertumpuk. */
-    #float-feed {
-        left: 16px;
-        top: auto;
-        bottom: 20px;
-        transform: none;
-        width: min(320px, calc(100vw - 32px));
-    }
-
-    /* Kartu tidak menangkap klik di layar sempit, supaya menu di bawahnya
-       tetap bisa ditekan. Navigasi tetap lewat titik penanda. */
-    #float-feed,
-    .float-card {
-        pointer-events: none;
-    }
-    .float-pager {
-        pointer-events: auto;
-    }
-    .float-card:hover {
-        transform: none;
-    }
-}
-
-@media (max-width: 700px) {
-    #float-feed {
-        bottom: 62px;
-        width: calc(100vw - 32px);
-    }
-}
+/* (Aturan responsif float-feed digabung di bagian RESPONSIF paling bawah
+   supaya tidak saling menimpa.) */
 
 /* ==========================================================
    EFEK INTERAKTIF PANEL FEEDBACK (tema HUD)
@@ -1395,24 +1441,322 @@ button:hover {
     }
 }
 
-@media (max-width: 700px) {
-    #btn-log {
-        bottom: 16px;
+/* ==========================================================
+   RESPONSIF — tablet, HP, HP kecil & landscape
+   Prinsip: desktop tidak berubah; layar kecil memakai
+   bottom-sheet + grid 2 kolom + modal full-lebar.
+   ========================================================== */
+
+/* ---- Tablet (<=1024px): panel ramping, feed menepi ke atas ---- */
+@media (max-width: 1024px) {
+    .ui-container {
         right: 16px;
-        padding: 8px 12px;
-        font-size: 12px;
+        width: 292px;
+        padding: 20px;
+    }
+    #detail-modal {
+        left: 16px;
+        width: min(330px, calc(100vw - 32px));
+    }
+    #btn-log {
+        right: 16px;
+    }
+    /* Pindah dari tengah layar ke kiri-atas agar globe tengah terlihat */
+    #float-feed {
+        left: 16px;
+        top: 70px;
+        bottom: auto;
+        transform: none;
+        width: min(280px, calc(100vw - 32px));
+    }
+}
+
+/* ---- Desktop lebar: beri napas lebih ---- */
+@media (min-width: 1400px) {
+    .ui-container {
+        width: 360px;
+        right: 48px;
+    }
+    #detail-modal {
+        width: 400px;
+        left: 48px;
+    }
+    #float-feed {
+        width: 330px;
+    }
+}
+
+/* ---- HP (<=700px): susunan vertikal rapi ---- */
+@media (max-width: 700px) {
+    /* Latar grid: perspektif dilunakkan supaya tidak gepeng */
+    .grid-bg {
+        height: 44vh;
+        background-size: 28px 28px;
+        transform: perspective(500px) rotateX(60deg);
+        opacity: 0.3;
     }
 
-    /* Panel mengapung menyesuaikan tombolnya di layar sempit */
+    /* HUD atas: satu baris ramping, koordinat disembunyikan */
+    .hud-top-left {
+        top: calc(10px + var(--sat));
+        left: 10px;
+        font-size: 10px;
+        line-height: 1.5;
+        max-width: calc(100vw - 140px);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .hud-coords {
+        display: none;
+    }
+    .hud-top-right {
+        top: calc(10px + var(--sat));
+        right: 10px;
+        font-size: 10px;
+        gap: 8px;
+    }
+    .radar-circle {
+        width: 24px;
+        height: 24px;
+    }
+    .hud-bottom-left {
+        display: none;
+    }
+
+    /* Baris kedua: feed pill (kiri) + tombol Feedback (kanan) */
+    #btn-log {
+        top: calc(46px + var(--sat));
+        right: 10px;
+        bottom: auto;
+        left: auto;
+        padding: 8px 12px;
+        font-size: 12px;
+        min-height: 40px;
+        z-index: 26;
+    }
+    #float-feed {
+        top: calc(46px + var(--sat));
+        bottom: auto;
+        left: 10px;
+        right: 118px;
+        width: auto;
+        transform: none;
+    }
+    #float-feed,
+    .float-card {
+        pointer-events: none;
+    }
+    .float-pager {
+        pointer-events: auto;
+    }
+    .float-card {
+        padding: 8px 10px;
+    }
+    .float-card:hover {
+        transform: none;
+    }
+    .float-tag {
+        font-size: 8px;
+        margin-bottom: 3px;
+    }
+    .float-name {
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .float-msg {
+        -webkit-line-clamp: 2;
+        font-size: 11px;
+    }
+    .float-time {
+        display: none;
+    }
+
+    /* Panel menu: bottom sheet kompak */
+    .ui-container {
+        top: auto;
+        bottom: calc(10px + var(--sab));
+        left: 10px;
+        right: 10px;
+        width: auto;
+        transform: none;
+        max-height: 37dvh;
+        padding: 14px 14px 12px;
+        border-radius: 12px;
+        background: rgba(2, 10, 16, 0.92);
+    }
+    .ui-container::before,
+    .ui-container::after {
+        display: none;
+    }
+    h1 {
+        font-size: 16px;
+        letter-spacing: 1px;
+    }
+    .subtitle {
+        margin: 2px 0 10px;
+        font-size: 11px;
+    }
+    .group-block {
+        margin-bottom: 10px;
+        padding: 6px 0 6px 10px;
+    }
+    .group-members {
+        max-height: 96px;
+        overflow-y: auto;
+    }
+    .group-members li {
+        font-size: 11px;
+    }
+    /* Tombol 2x2 proporsional: tanpa bracket, selalu 1 baris */
+    .buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .buttons button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        padding: 0 4px;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        text-align: center;
+    }
+    .buttons .bracket {
+        display: none;
+    }
+    .instructions {
+        display: none;
+    }
+
+    /* Panel feedback: lembar penuh */
+    #log-overlay {
+        padding: 10px;
+    }
     #log-panel:not(.log-positioned) {
-        left: 16px;
-        right: 16px;
-        bottom: 70px;
+        top: calc(100px + var(--sat));
+        bottom: auto;
+        left: 10px;
+        right: 10px;
         width: auto;
         margin: 0;
     }
     #log-panel {
-        max-height: min(66vh, 560px);
-        --log-pad: 18px;
+        max-height: calc(100dvh - 220px);
+        max-height: min(calc(100dvh - 220px), 520px);
+        --log-pad: 16px;
+        border-radius: 12px;
+    }
+    #log-form input,
+    #log-form textarea {
+        font-size: 16px; /* cegah auto-zoom iOS */
+    }
+
+    /* Panel detail: modal terpusat + backdrop gelap */
+    #detail-modal {
+        position: fixed;
+        top: 50%;
+        left: 12px;
+        right: 12px;
+        bottom: auto;
+        width: auto;
+        transform: translateY(-50%);
+        max-height: 70dvh;
+        padding: 18px;
+        border-radius: 12px;
+        background: rgba(2, 10, 16, 0.97);
+        z-index: 40;
+        box-shadow: 0 0 0 100vmax rgba(1, 6, 10, 0.55),
+            0 0 24px rgba(0, 243, 255, 0.2);
+    }
+    #detail-modal.hidden {
+        opacity: 0;
+        transform: translateY(-46%) scale(0.98);
+    }
+    #detail-modal h2 {
+        font-size: 16px;
+    }
+    #detail-modal p,
+    #detail-poin li,
+    .detail-section p {
+        font-size: 13px;
+    }
+
+    /* Teks ancaman: muat 1-2 baris rapi */
+    .threat-warning-text {
+        font-size: clamp(0.85rem, 5vw, 1.1rem);
+        line-height: 1.5;
+        letter-spacing: 1px;
+        padding: 10px 14px;
+        border-width: 1px;
+    }
+}
+
+/* ---- HP kecil (<=380px): makin padat ---- */
+@media (max-width: 380px) {
+    .hud-top-left {
+        font-size: 9px;
+    }
+    .ui-container {
+        padding: 12px;
+        max-height: 40dvh;
+    }
+    .buttons button {
+        font-size: 10px;
+        min-height: 44px;
+    }
+    #float-feed {
+        right: 108px;
+    }
+    .float-name {
+        font-size: 10px;
+    }
+    .float-msg {
+        font-size: 10px;
+    }
+}
+
+/* ---- Landscape pendek (mis. HP miring): panel samping ramping ---- */
+@media (max-height: 500px) and (orientation: landscape) {
+    .ui-container {
+        top: 50%;
+        bottom: auto;
+        left: auto;
+        right: 12px;
+        transform: translateY(-50%);
+        width: min(300px, 38vw);
+        max-height: 86dvh;
+        padding: 14px;
+    }
+    .buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .buttons button {
+        font-size: 12px;
+        padding: 8px 10px;
+        min-height: 38px;
+    }
+    .hud-bottom-left {
+        display: none;
+    }
+    .instructions {
+        display: none;
+    }
+    .group-members {
+        max-height: 72px;
+        overflow-y: auto;
+    }
+    #detail-modal {
+        max-height: 84dvh;
+    }
+    #float-feed {
+        top: auto;
+        bottom: 12px;
     }
 }

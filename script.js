@@ -207,6 +207,14 @@ const swotData = {
 // ========== GLOBE INIT ==========
 const elem = document.getElementById('globeViz');
 
+// Di layar sempit globe harus terlihat dari jauh agar tidak tertutup panel
+const isMobileView = () => window.matchMedia('(max-width: 700px)').matches;
+const homeView = () => ({
+    lat: INDONESIA.lat,
+    lng: INDONESIA.lng,
+    altitude: isMobileView() ? 2.4 : INDONESIA.altitude
+});
+
 const world = Globe()(elem)
     .backgroundColor('rgba(0,0,0,0)')
     .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
@@ -224,13 +232,13 @@ const world = Globe()(elem)
     .htmlElementsData([])
     .htmlElement(d => {
         const wrapper = document.createElement('div');
-        wrapper.style.cursor = 'pointer';
-        wrapper.style.pointerEvents = 'auto';
-        // Area klik lebih besar dari ikon (12px ekstra tiap sisi)
-        wrapper.style.padding = '12px';
-        wrapper.style.boxSizing = 'content-box';
+        wrapper.className = 'globe-marker';
+        // Ukuran ikon menyesuaikan layar: lebih kecil di HP supaya tidak menutupi globe
+        const iconSize = window.innerWidth < 700 ? 32 : 40;
+        const halfBox = iconSize / 2 + 12; // ikon/2 + padding CSS
+        wrapper.style.transform = 'translate(' + (-halfBox) + 'px,' + (-halfBox) + 'px)';
         wrapper.innerHTML = `
-            <svg width="40" height="40" viewBox="0 0 40 40" style="filter: drop-shadow(0 0 6px ${d.color}); overflow:visible;">
+            <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 40 40" style="filter: drop-shadow(0 0 6px ${d.color}); overflow:visible;">
                 <!-- outer circle -->
                 <circle cx="20" cy="20" r="14" fill="none" stroke="${d.color}" stroke-width="1.5" opacity="0.6"/>
                 <!-- inner circle -->
@@ -244,11 +252,10 @@ const world = Globe()(elem)
                 <circle cx="20" cy="20" r="2" fill="${d.color}"/>
             </svg>
         `;
-        // Ikon 40px + padding 12px = kotak 64px, geser setengahnya agar tetap center
-        wrapper.style.transform = 'translate(-32px, -32px)';
         wrapper.onclick = () => {
             showDetail(d);
-            world.pointOfView({ lat: d.lat, lng: d.lng, altitude: 0.4 }, 1500);
+            const zoomAlt = isMobileView() ? 1.6 : 0.4;
+            world.pointOfView({ lat: d.lat, lng: d.lng, altitude: zoomAlt }, 1500);
         };
         return wrapper;
     });
@@ -268,8 +275,21 @@ fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/data
 world.controls().autoRotate = true;
 world.controls().autoRotateSpeed = 0.5;
 
-// Focus on Indonesia
-setTimeout(() => world.pointOfView(INDONESIA, 2000), 800);
+// Ukuran awal mengikuti layar + fokus ke Indonesia
+world.width(window.innerWidth).height(window.innerHeight);
+setTimeout(() => world.pointOfView(homeView(), 2000), 800);
+
+// Globe selalu mengisi layar saat HP diputar / browser di-resize
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        world.width(window.innerWidth).height(window.innerHeight);
+    }, 150);
+});
+window.addEventListener('orientationchange', () => {
+    setTimeout(() => world.width(window.innerWidth).height(window.innerHeight), 300);
+});
 
 // ========== INTERACTION ==========
 let currentCategory = null;
@@ -290,7 +310,7 @@ function setCategory(category) {
         statusEl.textContent = 'CRITICAL ALERT';
         statusEl.className = 'status-danger';
         world.atmosphereColor('#ff003c');
-        world.pointOfView({ lat: INDONESIA.lat, lng: INDONESIA.lng, altitude: 1.5 }, 1500);
+        world.pointOfView({ lat: INDONESIA.lat, lng: INDONESIA.lng, altitude: isMobileView() ? 2.1 : 1.5 }, 1500);
     } else {
         document.body.classList.remove('threat-active');
         world.controls().autoRotate = true;
@@ -307,7 +327,7 @@ function setCategory(category) {
     if (category !== 'threat') {
         setTimeout(() => {
             if (!document.getElementById('detail-modal').classList.contains('hidden')) return;
-            world.pointOfView(INDONESIA, 1200);
+            world.pointOfView(homeView(), 1200);
         }, 100);
     }
 
@@ -411,11 +431,11 @@ function closeModal() {
 
     if (currentCategory === 'threat') {
         world.controls().autoRotate = false;
-        world.pointOfView({ lat: INDONESIA.lat, lng: INDONESIA.lng, altitude: 1.5 }, 1200);
+        world.pointOfView({ lat: INDONESIA.lat, lng: INDONESIA.lng, altitude: isMobileView() ? 2.1 : 1.5 }, 1200);
         document.getElementById('status-text').textContent = 'CRITICAL ALERT';
     } else {
         world.controls().autoRotate = true;
-        world.pointOfView(INDONESIA, 1200);
+        world.pointOfView(homeView(), 1200);
         document.getElementById('status-text').textContent = 'ONLINE';
     }
 }
@@ -982,6 +1002,8 @@ function initLogDrag() {
     const panel = document.getElementById('log-panel');
     const handle = document.querySelector('.log-drag');
     if (!panel || !handle) return;
+    // Di HP panel berupa lembar tetap: seret dimatikan agar tidak kabur
+    if (window.matchMedia('(max-width: 700px)').matches) return;
 
     let startX = 0;
     let startY = 0;
@@ -1085,6 +1107,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (membersBtn) membersBtn.addEventListener('click', () => toggleMembers());
 
     initLogDrag();
+
+    // Di HP daftar anggota default tertutup supaya panel ramping
+    if (window.matchMedia('(max-width: 700px)').matches) toggleMembers(false);
 
     // Delegasi klik: tombol [ BALAS ] ada di dalam daftar yang isinya dinamis
     if (listEl) {

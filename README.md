@@ -2,7 +2,7 @@
 
 Tugas PPKN — Analisis SWOT Indonesia dalam bentuk peta globe interaktif.
 
-## Kelompok 3 — Kelas XII SIJA 2
+## Kelompok 4 — Kelas XII SIJA 2
 
 | No | Nama |
 | -- | ---- |
